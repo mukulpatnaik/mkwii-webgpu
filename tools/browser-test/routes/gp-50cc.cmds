@@ -1,0 +1,53 @@
+# Fresh profile -> first 50cc Grand Prix race (Mushroom Cup, Luigi Circuit) with the default
+# Mario / Standard Kart M / automatic drift, then drive (left click = accelerate) with a trace.
+# Start is clicked by pace-drive.js between commands, so the boot wait is split up.
+wait 5000
+wait 5000
+wait 5000
+wait 5000
+wait 4000
+shot intro
+# intro -> title -> Select License -> new license -> Choose a Mii -> confirm -> ready -> guest note
+click 500 430
+wait 2500
+shot title
+click 500 430
+wait 3000
+click 500 430
+wait 2500
+click 500 430
+wait 3000
+click 500 430
+wait 2500
+click 500 430
+wait 4000
+click 500 430
+wait 4000
+click 500 430
+wait 4000
+shot main-menu
+# Single Player -> Grand Prix -> 50cc -> Mario -> kart -> automatic drift -> Mushroom Cup -> OK
+click 500 430
+wait 3000
+click 500 430
+wait 3000
+click 500 430
+wait 4000
+click 500 430
+wait 3500
+click 500 430
+wait 3500
+click 500 430
+wait 3500
+click 500 430
+wait 3000
+shot start-race
+click 500 430
+wait 12000
+mousedown 500 430
+wait 15000
+shot race
+trace 5000 race
+wait 25000
+shot race-later
+mouseup
