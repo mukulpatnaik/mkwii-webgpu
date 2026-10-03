@@ -1,0 +1,26 @@
+# Native: title -> licence 1 -> Single Player -> Time Trials -> default character/kart/drift ->
+# Mushroom Cup -> Luigi Circuit -> Ghosts screen -> "Watch the Replay" of the staff ghost.
+# Needs an existing licence in slot 1 and keyboard+mouse on port 1. Timings assume the title is up
+# ~12 s after launch (Linux, RTX 4090, warm pipeline cache); menus need ~3 s to settle before a
+# D-pad press registers.
+at 14 a
+at 17 shot 01-licence-select
+at 18 a
+at 22 shot 02-main-menu
+at 22 a
+at 26 key Down
+at 27 shot 03-single-player
+at 28 a
+at 31 a
+at 34 a
+at 37 a
+at 40 a
+at 43 a
+at 46 shot 04-ghosts
+at 47 key Down
+at 48 shot 05-watch-replay-selected
+at 48 a
+at 51 shot 06-start-race
+at 52 a
+# The replay has no HUD; it ends (camera stops, fade) about GO + ghost time, then loops.
+at 140 burst finish 15

@@ -1,0 +1,48 @@
+# Web (tools/browser-test/parity-drive.js): title -> licence 1 -> Single Player -> Time Trials ->
+# default character/kart/drift -> Mushroom Cup -> Luigi Circuit -> Ghosts -> "Race This Ghost",
+# nobody driving: the HUD race timer runs while the staff ghost does its three laps.
+# Needs a licence in slot 1 (scripts/parity/stage-save.sh) and the page's default keyboard+mouse.
+waitlog 90 1 Scene Exit
+wait 3000
+shot 00-title
+a
+wait 3500
+shot 01-licence-select
+a
+wait 4000
+shot 02-main-menu
+a
+# The Single Player menu slides in slowly when the machine is loaded; a press sent before it has
+# settled is lost, so every step below leaves the menu ~4 s.
+wait 5000
+key ArrowDown
+wait 1000
+shot 03-single-player
+a
+wait 4000
+a
+wait 4000
+a
+wait 4000
+a
+wait 4000
+a
+wait 4000
+a
+wait 4500
+shot 04-ghosts
+# (web-watch-staff-replay.steps presses ArrowDown here for "Watch the Replay")
+shot 05-race-ghost-selected
+a
+wait 4000
+shot 06-start-race
+a
+waitlog 60 \[web-warm\] [0-9]+ players
+# GO is ~8.3 s after that line on this machine; the ghost should cross the line at GO + its time
+# (its finish time, see scripts/parity/rkg-info.py), so grab frames from about GO + 1:28.8 for 6 s.
+wait 97000
+burst finish 6
+shot 07-after-finish
+wait 4000
+shot 08-later
+quit
