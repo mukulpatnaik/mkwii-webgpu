@@ -1,0 +1,19 @@
+[package]
+name = "mkw-disc-wasm"
+version = "0.1.0"
+edition = "2021"
+license = "GPL-3.0-or-later"
+description = "Spike: read a user's Mario Kart Wii disc image in the browser with nod compiled to wasm32"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+# Clone with scripts/clone-upstream.sh; no C compression backends (ISO, WBFS and CISO need none).
+nod = { path = "../../upstream/nod/nod", default-features = false }
+
+[profile.release]
+opt-level = 3
+panic = "abort"
+lto = true
+codegen-units = 1

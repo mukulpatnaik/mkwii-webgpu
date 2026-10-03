@@ -1,0 +1,57 @@
+// Drive the installed Google Chrome (real GPU, X11 display) at the staged WiiCompiled web page,
+// collect the console, and screenshot the canvas at intervals. Usage:
+//   node boot-test.js <url> <seconds> <outdir>
+const { chromium } = require('playwright-core');
+const fs = require('fs');
+const path = require('path');
+
+const [url, secondsArg, outdir] = process.argv.slice(2);
+const seconds = Number(secondsArg || 90);
+fs.mkdirSync(outdir, { recursive: true });
+
+(async () => {
+  const browser = await chromium.launch({
+    executablePath: '/usr/bin/google-chrome',
+    headless: false,
+    args: [
+      '--enable-unsafe-webgpu',
+      '--enable-features=Vulkan,WebAssemblyExperimentalJSPI',
+      '--ignore-gpu-blocklist',
+      '--autoplay-policy=no-user-gesture-required',
+      '--window-size=1280,900',
+    ],
+    ignoreDefaultArgs: ['--disable-gpu', '--mute-audio'],
+  });
+  const page = await browser.newPage({ viewport: { width: 1280, height: 860 } });
+  const log = fs.createWriteStream(path.join(outdir, 'console.log'));
+  page.on('console', (m) => log.write(`[${m.type()}] ${m.text()}\n`));
+  page.on('pageerror', (e) => log.write(`[pageerror] ${e.message}\n`));
+  page.on('crash', () => log.write('[crash] page crashed\n'));
+  await page.goto(url, { waitUntil: 'domcontentloaded' });
+  const t0 = Date.now();
+  let shot = 0;
+  const everyMs = 10000;
+  while (Date.now() - t0 < seconds * 1000) {
+    await page.waitForTimeout(everyMs);
+    shot++;
+    const name = path.join(outdir, `shot-${String(shot).padStart(2, '0')}.png`);
+    await page.screenshot({ path: name });
+    const status = await page.evaluate(() => {
+      const b = document.getElementById('start');
+      const c = document.querySelector('canvas');
+      return {
+        start: b ? `${b.textContent.trim()} disabled=${b.disabled} hidden=${b.hidden}` : 'n/a',
+        canvas: c ? `${c.width}x${c.height}` : 'none',
+        body: (document.body.innerText || '').slice(0, 300).replace(/\s+/g, ' '),
+      };
+    }).catch((e) => ({ error: String(e) }));
+    console.log(`t+${Math.round((Date.now() - t0) / 1000)}s ${JSON.stringify(status)}`);
+    // Press Start once it is enabled.
+    if (status.start && /disabled=false/.test(status.start) && !/clicked/.test(status.start)) {
+      await page.click('#start').catch(() => {});
+      console.log('clicked #start');
+    }
+  }
+  await browser.close();
+  log.end();
+})().catch((e) => { console.error(e); process.exit(1); });

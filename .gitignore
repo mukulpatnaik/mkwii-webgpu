@@ -1,0 +1,21 @@
+# Upstream checkouts (clone with scripts/clone-upstream.sh); never commit them here.
+/upstream/
+# Build output
+/build/
+/build-*/
+/spikes/*/out/
+# Never commit anything derived from a game dump.
+*.iso
+*.wbfs
+*.rvz
+*.gcm
+*.ciso
+*.dol
+*.rel
+/generated/
+*.gcz
+*.wia
+# User game dump and anything derived from it
+/game/
+# Working fork of WiiCompiled (own git repo; see docs/plan.md)
+/work/

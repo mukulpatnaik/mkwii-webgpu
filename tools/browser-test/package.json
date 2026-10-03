@@ -1,0 +1,6 @@
+{
+  "name": "mkw-browser-test",
+  "private": true,
+  "description": "Drive the staged WiiCompiled web build in the installed Google Chrome (real GPU) and capture console + screenshots",
+  "dependencies": { "playwright-core": "^1.63.0" }
+}
