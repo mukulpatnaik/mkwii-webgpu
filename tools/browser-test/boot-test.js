@@ -1,6 +1,8 @@
 // Drive the installed Google Chrome (real GPU, X11 display) at the staged WiiCompiled web page,
 // collect the console, and screenshot the canvas at intervals. Usage:
 //   node boot-test.js <url> <seconds> <outdir>
+// With MKW_DISC=/path/to/your/disc.wbfs, the page's disc picker is given that file (read locally
+// by the page, never copied) for a site without a staged game folder.
 const { chromium } = require('playwright-core');
 const fs = require('fs');
 const path = require('path');
@@ -28,6 +30,10 @@ fs.mkdirSync(outdir, { recursive: true });
   page.on('pageerror', (e) => log.write(`[pageerror] ${e.message}\n`));
   page.on('crash', () => log.write('[crash] page crashed\n'));
   await page.goto(url, { waitUntil: 'domcontentloaded' });
+  if (process.env.MKW_DISC) {
+    await page.setInputFiles('#disc-file', process.env.MKW_DISC);
+    console.log('picked the disc image');
+  }
   const t0 = Date.now();
   let shot = 0;
   const everyMs = 10000;

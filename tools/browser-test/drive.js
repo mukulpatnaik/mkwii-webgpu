@@ -1,5 +1,7 @@
 // Interactive driver: boots the page like boot-test.js, then polls <outdir>/cmds for new lines.
-// Commands: click [x y] | key <Name> [holdMs] | wait <ms> | shot <name> | eval <js> | quit
+// Commands: click [x y] | key <Name> [holdMs] | wait <ms> | shot <name> | eval <js> |
+//           pick <path to your disc image> (sets the page's disc file input; the file is read
+//           locally by the page, never copied) | quit
 // Every command line is executed once, in order; output goes to <outdir>/driver.log.
 const { chromium } = require('playwright-core');
 const fs = require('fs');
@@ -37,7 +39,9 @@ const say = (s) => { dlog.write(`${new Date().toISOString()} ${s}\n`); };
     try {
       if (cmd === 'quit') break;
       if (cmd === 'wait') await page.waitForTimeout(Number(args[0]));
-      else if (cmd === 'click') {
+      else if (cmd === 'pick') {
+        await page.setInputFiles('#disc-file', args.join(' '));
+      } else if (cmd === 'click') {
         const x = Number(args[0] || 640), y = Number(args[1] || 430);
         await page.mouse.move(x, y); await page.mouse.down(); await page.waitForTimeout(Number(args[2] || 120)); await page.mouse.up();
       } else if (cmd === 'key') {
