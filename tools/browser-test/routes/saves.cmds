@@ -1,0 +1,94 @@
+# Saves UI acceptance (saves-test.js). Profile a: first boot creates the save, a licence is made,
+# the save is exported while running and after a reload, and a second tab is refused. Profile b
+# (fresh browser profile): garbage is rejected, the backup is imported, survives a reload, the game
+# boots with it, and an import chosen while the game runs is applied after the reload.
+profile a
+waitready
+info
+text
+shot ready
+start
+wait 30000
+shot first-boot
+# intro -> title -> Select License -> new license -> Choose a Mii -> confirm -> ready -> guest note
+click 500 430
+wait 2500
+click 500 430
+wait 3000
+click 500 430
+wait 2500
+click 500 430
+wait 3000
+click 500 430
+wait 2500
+click 500 430
+wait 4000
+click 500 430
+wait 4000
+click 500 430
+wait 4000
+shot new-license
+# OK -> (licence saved) -> main menu
+click 500 430
+wait 4000
+click 500 430
+wait 4000
+shot main-menu
+info
+text
+export save running-rksys.dat
+tab2 second-tab 20000
+reload
+waitready
+info
+export save rksys.dat
+export backup backup.zip
+panel exported
+profile b
+waitready
+info
+text
+shot fresh
+garbage garbage.dat 5000
+import garbage.dat
+panel rejected-garbage
+truncate rksys.dat truncated.dat 100000
+import truncated.dat
+panel rejected-truncated
+import backup.zip 4000
+info
+panel imported
+sha rksys.dat
+reload
+waitready
+info
+text
+start
+wait 2000
+panel persist-after-start
+wait 28000
+shot boot
+click 500 430
+wait 3000
+shot b-c1
+click 500 430
+wait 3000
+shot b-c2
+click 500 430
+wait 3000
+shot b-c3
+click 500 430
+wait 4000
+shot b-c4
+info
+import rksys.dat 4000
+waitready
+wait 2000
+info
+text
+panel pending-applied
+# Restore previous save: back to the save from before the last import (the same bytes here)
+press #saves-restore 3000
+info
+panel restored
+quit
