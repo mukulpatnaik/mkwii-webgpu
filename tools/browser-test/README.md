@@ -9,6 +9,13 @@ DISPLAY=:0 node boot-test.js "http://127.0.0.1:8000/WiiCompiled.html?muted" 120 
 DISPLAY=:0 node drive.js     "http://127.0.0.1:8000/WiiCompiled.html?muted" out/drive   # then append commands to out/drive/cmds
 ```
 
+Only one Chrome test may hold the GPU and display at a time. When several tracks run
+(`scripts/new-track.sh`), wrap every run in the shared lock and use the track's port:
+
+```bash
+DISPLAY=:0 flock /tmp/mkw-chrome.lock node boot-test.js "http://127.0.0.1:$PORT/WiiCompiled.html?muted" 120 out/boot-$PORT
+```
+
 `boot-test.js <url> <seconds> <outdir>`: clicks Start, screenshots every 10 s, writes `console.log`.
 `drive.js <url> <outdir>`: polls `<outdir>/cmds`; commands are `click [x y]`, `key <Name> [holdMs]`,
 `wait <ms>`, `shot <name>`, `eval <js>`, `quit`. Left click is A. The title drops into the attract

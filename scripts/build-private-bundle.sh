@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Build the private browser bundle of Mario Kart Wii from YOUR OWN clean retail dump (PAL RMCP01,
 # or NTSC-U/J/K through the region-support branch merged into work/Wiicompiled),
-# on Linux, using Minithena's `web` branch of WiiCompiled (work/Wiicompiled, branch athena-web)
+# on Linux, using Minithena's `web` branch of WiiCompiled (work/Wiicompiled, branch athena-web-ntsc)
 # and Minithena's page tooling (work/mariokartwebtest, with `wiicompiled` symlinked to our fork).
 #
 # Everything this script produces is derived from the game and lives in gitignored paths
@@ -15,11 +15,24 @@
 # Then:
 #   cd work/mariokartwebtest && python3 tools/serve.py site/public
 #   open http://127.0.0.1:8000/WiiCompiled.html?muted   (Chrome/Edge 137+ with WebGPU)
+#
+# Environment (defaults build the main checkout; scripts/new-track.sh prints the values for a
+# track worktree so several builds can run side by side):
+#   FORK       WiiCompiled checkout to build      (default: work/Wiicompiled)
+#   BUILD_DIR  Emscripten build directory         (default: $FORK/build-web)
+#   SITE_DIR   staged folder to serve             (default: work/mariokartwebtest/site/public)
+#   PORT       port printed in the serve hint     (default: 8000)
+#   JOBS       build/translate parallelism        (default: nproc)
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-FORK="$ROOT/work/Wiicompiled"
+FORK="$(cd "${FORK:-$ROOT/work/Wiicompiled}" && pwd)"
 TOOLING="$ROOT/work/mariokartwebtest"
+BUILD_DIR="${BUILD_DIR:-$FORK/build-web}"
+case "$BUILD_DIR" in /*) ;; *) BUILD_DIR="$PWD/$BUILD_DIR" ;; esac
+SITE_DIR="${SITE_DIR:-$TOOLING/site/public}"
+case "$SITE_DIR" in /*) ;; *) SITE_DIR="$PWD/$SITE_DIR" ;; esac
+PORT="${PORT:-8000}"
 EMSDK="${EMSDK:-$HOME/tools/emsdk}"
 DOTNET_ROOT="${DOTNET_ROOT:-$HOME/tools/dotnet}"
 NODTOOL="${NODTOOL:-$HOME/tools/bin/nodtool}"
@@ -37,7 +50,11 @@ for arg in "$@"; do
 done
 
 cd "$FORK"
-[ -f runtime/src/platform/web/mkw_fibers.js ] || { echo "work/Wiicompiled is not on the web branch" >&2; exit 1; }
+[ -f runtime/src/platform/web/mkw_fibers.js ] || { echo "$FORK is not on the web branch" >&2; exit 1; }
+# Track worktrees (scripts/new-track.sh) share the main checkout's Assets/ and generated/ through
+# symlinks; extracting or translating there would overwrite them under every other track.
+if [ -L Assets ] && [ "$skip_extract" = 0 ]; then echo "$FORK/Assets is shared; pass --skip-extract" >&2; exit 1; fi
+if [ -L generated ] && [ "$skip_translate" = 0 ]; then echo "$FORK/generated is shared; pass --skip-translate" >&2; exit 1; fi
 
 # 1. Extract the data partition (whole: the runtime reads an extracted DATA/ tree).
 if [ "$skip_extract" = 0 ]; then
@@ -100,14 +117,13 @@ fi
 # 3. Web build (Emscripten). Products ON pulls in the translated shards.
 # shellcheck disable=SC1091
 source "$EMSDK/emsdk_env.sh" >/dev/null
-emcmake cmake -S runtime -B build-web -G Ninja -DCMAKE_MAKE_PROGRAM="$(command -v ninja)" \
+emcmake cmake -S runtime -B "$BUILD_DIR" -G Ninja -DCMAKE_MAKE_PROGRAM="$(command -v ninja)" \
   -DCMAKE_BUILD_TYPE=Release -DMKW_BUILD_PRODUCTS=ON
-cmake --build build-web --target WiiCompiled --parallel "$JOBS"
-ls -la build-web/WiiCompiled.wasm build-web/WiiCompiled.js build-web/WiiCompiled.html build-web/WiiCompiled.data 2>/dev/null || true
+cmake --build "$BUILD_DIR" --target WiiCompiled --parallel "$JOBS"
+ls -la "$BUILD_DIR"/WiiCompiled.{wasm,js,html,data} 2>/dev/null || true
 
 # 4. Stage for the local page (Minithena's tooling; symlinks the extracted disc, writes manifests).
-cd "$TOOLING"
-./tools/stage-web.sh
+FORK="$FORK" BUILD_DIR="$BUILD_DIR" SITE_DIR="$SITE_DIR" PORT="$PORT" "$TOOLING/tools/stage-web.sh"
 echo
-echo "Staged. Serve with:  cd $TOOLING && python3 tools/serve.py site/public"
-echo "Then open http://127.0.0.1:8000/WiiCompiled.html?muted in Chrome/Edge 137+."
+echo "Staged. Serve with:  python3 $TOOLING/tools/serve.py $SITE_DIR --port $PORT"
+echo "Then open http://127.0.0.1:$PORT/WiiCompiled.html?muted in Chrome/Edge 137+."
