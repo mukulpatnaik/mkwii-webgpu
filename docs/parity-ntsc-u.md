@@ -13,7 +13,7 @@ Never commit or upload them.
 
 | Piece | File |
 | --- | --- |
-| Native build | `work/wt-e/build-native` (configure line below) |
+| Native build | `work/Wiicompiled/build-native` (configure line below) |
 | Bounded native run with scripted input and window grabs | `scripts/parity/native-run.sh` |
 | Native menu routes (`at <sec> <verb>` lines) | `scripts/parity/native-race-staff-ghost.steps`, `native-watch-staff-replay.steps` |
 | Stage the native save into a web site (unlocked, in the manifests) | `scripts/parity/stage-save.sh` |
@@ -56,8 +56,8 @@ open-loop xdotool script cannot finish three laps).
 
 Checklist (about 10 minutes):
 
-1. [ ] Build native once (`work/wt-e/build-native/WiiCompiled` exists; see "Native build").
-2. [ ] Run it on the desktop, no timeout: `cd work/wt-e/build-native && ./WiiCompiled`
+1. [ ] Build native once (`work/Wiicompiled/build-native/WiiCompiled` exists; see "Native build").
+2. [ ] Run it on the desktop, no timeout: `cd work/Wiicompiled/build-native && ./WiiCompiled`
        (it reads `UserData/Config.toml` because `portable.txt` sits next to it).
 3. [ ] Press **F10** -> Controller settings -> tick **Keyboard and mouse** (WASD preset;
        already done on this machine, saved in `UserData/keyboard_bindings.dat`). F10 again to close.
@@ -68,7 +68,7 @@ Checklist (about 10 minutes):
 5. [ ] On the results screen write down the finish time and the three lap times. Let the game
        save the ghost (it does so for a new best time); quit with the window's close button.
 6. [ ] Check the save holds it:
-       `scripts/parity/rkg-info.py work/wt-e/build-native/UserData/NAND/title/00010004/524d4345/data/rksys.dat`
+       `scripts/parity/rkg-info.py work/Wiicompiled/build-native/UserData/NAND/title/00010004/524d4345/data/rksys.dat`
        must list a `Luigi Circuit ... (player best time ...)` ghost with that time.
 
 Then, automated again:
@@ -87,21 +87,21 @@ Then, automated again:
 * Native user data: `$XDG_DATA_HOME/WiiCompiled` (default `~/.local/share/WiiCompiled`), unless a
   `portable.txt` is found next to the executable or up to four directories above it; then it is
   `<that directory>/UserData`. This machine uses the portable layout:
-  `work/wt-e/build-native/{portable.txt,UserData/}`.
-* `Config.toml` in that directory; `[paths] dvd_root` points at `.../work/wt-e/Assets/DATA`
+  `work/Wiicompiled/build-native/{portable.txt,UserData/}`.
+* `Config.toml` in that directory; `[paths] dvd_root` points at `.../work/Wiicompiled/Assets/DATA`
   (the shared extracted disc). `graphics_api = "vulkan"`.
 * Native NTSC-U save: `<user data>/NAND/title/00010004/524d4345/data/rksys.dat`
-  (here `work/wt-e/build-native/UserData/NAND/title/00010004/524d4345/data/rksys.dat`). PAL uses
+  (here `work/Wiicompiled/build-native/UserData/NAND/title/00010004/524d4345/data/rksys.dat`). PAL uses
   `524d4350`.
 * Logs: `<user data>/Logs/<run>/`; the runtime also prints to stdout (captured as `stdout.log`).
 * Web: the page seeds its NAND from `game/save/rksys.dat` on first start (or `?resetsave`) into
-  the region's own title directory (fixed on `track/e`; before that it always used the PAL one,
+  the region's own title directory (fixed on `athena-web-ntsc`, commit c1ccae0; before that it always used the PAL one,
   so an NTSC-U web build ignored a staged save).
 
 ## Native build
 
 ```bash
-cd work/wt-e
+cd work/Wiicompiled
 export PATH=$HOME/tools/bin:$PATH
 cmake -S runtime -B build-native -G Ninja -DCMAKE_MAKE_PROGRAM=$HOME/tools/bin/ninja \
   -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=clang-16 -DCMAKE_CXX_COMPILER=clang++-16 \

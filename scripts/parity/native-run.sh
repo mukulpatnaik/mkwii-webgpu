@@ -19,13 +19,13 @@
 # mouse, which applies the WASD + mouse preset); the setting is saved next to Config.toml.
 #
 # Environment:
-#   NATIVE_BUILD  native build directory (default: work/wt-e/build-native)
+#   NATIVE_BUILD  native build directory (default: work/Wiicompiled/build-native)
 #   PERIODIC      seconds between automatic screenshots, 0 = none (default 15)
 #   NO_LOCK=1     do not take /tmp/mkw-chrome.lock (only when the caller already holds it)
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 seconds="${1:?seconds}"; outdir="${2:?outdir}"; script="${3:-}"
-build="${NATIVE_BUILD:-$ROOT/work/wt-e/build-native}"
+build="${NATIVE_BUILD:-$ROOT/work/Wiicompiled/build-native}"
 periodic="${PERIODIC:-15}"
 [ -x "$build/WiiCompiled" ] || { echo "no native build at $build" >&2; exit 1; }
 mkdir -p "$outdir"; outdir="$(cd "$outdir" && pwd)"
