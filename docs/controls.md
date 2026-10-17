@@ -124,8 +124,8 @@ build SDL then falls back to a generic layout that rarely fits. What happens now
 Tested in Chrome on Linux with simulated pads (`tools/browser-test/pad-drive.js`, `FAKE_PROFILE=powera`
 and `FAKE_PROFILE=unknown`): the automatic mapping drives the menus with the bottom button and
 D-pad; the wizard binds all 16 controls of the unknown pad and the saved mapping drives the menus.
-Not tested: the real PowerA in the game, Chrome on macOS (its raw D-pad is reported as a single
-axis, which the wizard cannot bind), Firefox.
+Not tested: the real PowerA in the game, Chrome on macOS (which may report a raw D-pad as one
+combined axis; the wizard cannot bind that, so skip the D-pad steps there), Firefox.
 
 ### Several players
 
