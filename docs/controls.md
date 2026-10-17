@@ -105,6 +105,28 @@ dead zones and Dolphin-style expressions are in the same menu. These are saved p
 storage. Pads the browser cannot map (`mapping == ""`) should be offered "Set up" (the mapping
 wizard) in F10 → Controller settings; not tested in the browser.
 
+### Controllers the browser does not know (no standard layout)
+
+Chrome gives only controllers it recognises the `standard` layout; others (many third-party
+pads, for example the PowerA Core Plus Wired Controller for Switch, 20d6:a711) arrive with
+`mapping: ""`, buttons in the device's own order and the D-pad as two extra axes. In the web
+build SDL then falls back to a generic layout that rarely fits. What happens now:
+
+- **Browser on Linux:** if SDL's Linux database knows the vendor and product, the page uses that
+  mapping automatically, with the D-pad read from the two extra axes. The console says
+  `[web-pad] 20d6:a711: using SDL's Linux mapping "PowerA Wired GameCube Controller"`. For a
+  Switch-layout pad this means the **bottom** button is the game's A and the **right** button its B.
+- **Otherwise** (an unknown pad, or Chrome on macOS/Windows, where the raw order differs and is
+  untested): the console says no mapping fits, and F10 -> Controller settings lists the pad under
+  "Unrecognized controllers" with **Fix mapping**. The wizard asks for each control; D-pad
+  directions that arrive as axes are accepted. Save remembers it in this browser.
+
+Tested in Chrome on Linux with simulated pads (`tools/browser-test/pad-drive.js`, `FAKE_PROFILE=powera`
+and `FAKE_PROFILE=unknown`): the automatic mapping drives the menus with the bottom button and
+D-pad; the wizard binds all 16 controls of the unknown pad and the saved mapping drives the menus.
+Not tested: the real PowerA in the game, Chrome on macOS (its raw D-pad is reported as a single
+axis, which the wizard cannot bind), Firefox.
+
 ### Several players
 
 - Local multiplayer (Main Menu → Multiplayer → 2/3/4 Players) opens the game's Controller

@@ -64,14 +64,25 @@ async function padSend(line) {
 const fakeCount = padSocket.startsWith('fake:') ? Number(padSocket.slice(5)) : 0;
 // Runs in the page. Standard-mapping indices: buttons a0 b1 x2 y3 lb4 rb5 lt6 rt7 back8 start9 ls10
 // rs11 up12 down13 left14 right15 guide16; axes lx0 ly1 rx2 ry3.
-function installFakePads(count) {
-  const BTN = { a: 0, south: 0, b: 1, east: 1, x: 2, west: 2, y: 3, north: 3, lb: 4, rb: 5, back: 8, select: 8,
-    start: 9, ls: 10, rs: 11, up: 12, down: 13, left: 14, right: 15, guide: 16, mode: 16 };
-  const AX = { lx: 0, ly: 1, rx: 2, ry: 3 };
+// FAKE_PROFILE=powera imitates what Chrome on Linux reports for a PowerA Core (Plus) Wired
+// Controller (20d6:a711): no standard layout, 14 buttons in HID order, the D-pad hat as axes 4/5.
+// Its button names are the pad's printed Switch labels (b is the bottom button); its D-pad is
+// `pad axis 0 hatx|haty -32767|32767`.
+function installFakePads([count, profile]) {
+  // FAKE_PROFILE=unknown: the same layout under a vendor/product SDL has no mapping for.
+  const powera = profile === 'powera' || profile === 'unknown';
+  const BTN = powera
+    ? { y: 0, b: 1, a: 2, x: 3, l: 4, r: 5, zl: 6, zr: 7, minus: 8, plus: 9, ls: 10, rs: 11, home: 12, capture: 13 }
+    : { a: 0, south: 0, b: 1, east: 1, x: 2, west: 2, y: 3, north: 3, lb: 4, rb: 5, back: 8, select: 8,
+        start: 9, ls: 10, rs: 11, up: 12, down: 13, left: 14, right: 15, guide: 16, mode: 16 };
+  const AX = powera ? { lx: 0, ly: 1, rx: 2, ry: 3, hatx: 4, haty: 5 } : { lx: 0, ly: 1, rx: 2, ry: 3 };
   const pads = Array.from({ length: count }, (_, i) => ({
-    id: `Fake standard pad ${i + 1} (STANDARD GAMEPAD Vendor: 045e Product: 028e)`, index: i, connected: true,
-    mapping: 'standard', timestamp: performance.now(), axes: [0, 0, 0, 0], vibrationActuator: null,
-    buttons: Array.from({ length: 17 }, () => ({ pressed: false, touched: false, value: 0 })),
+    id: profile === 'unknown' ? 'Test Unknown Pad (Vendor: 1234 Product: 5678)'
+      : powera ? 'PowerA Core (Plus) Wired Controller (Vendor: 20d6 Product: a711)'
+               : `Fake standard pad ${i + 1} (STANDARD GAMEPAD Vendor: 045e Product: 028e)`,
+    index: i, connected: true, mapping: powera ? '' : 'standard', timestamp: performance.now(),
+    axes: powera ? [0, 0, 0, 0, 0, 0] : [0, 0, 0, 0], vibrationActuator: null,
+    buttons: Array.from({ length: powera ? 14 : 17 }, () => ({ pressed: false, touched: false, value: 0 })),
   }));
   Navigator.prototype.getGamepads = function () { return pads.map((p) => ({ ...p, axes: [...p.axes], buttons: p.buttons.map((b) => ({ ...b })) })); };
   const setButton = (p, n, v) => { p.buttons[n] = { pressed: v > 0.5, touched: v > 0, value: v }; };
@@ -122,7 +133,7 @@ const gamepadSummary = () => Array.from(navigator.getGamepads()).map((g, i) => g
       window.addEventListener(type, (e) => console.log(`[pad-drive] ${type} index=${e.gamepad.index} mapping=${e.gamepad.mapping} id=${e.gamepad.id}`));
     }
   });
-  if (fakeCount) { await page.addInitScript(installFakePads, fakeCount); fakePage = page; say(`fake pads: ${fakeCount}`); }
+  if (fakeCount) { await page.addInitScript(installFakePads, [fakeCount, process.env.FAKE_PROFILE || '']); fakePage = page; say(`fake pads: ${fakeCount}`); }
   await page.goto(url, { waitUntil: 'domcontentloaded' });
   await page.bringToFront();
   say('loaded');
