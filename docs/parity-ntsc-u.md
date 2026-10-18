@@ -104,9 +104,17 @@ Then, automated again:
 cd work/Wiicompiled
 export PATH=$HOME/tools/bin:$PATH
 cmake -S runtime -B build-native -G Ninja -DCMAKE_MAKE_PROGRAM=$HOME/tools/bin/ninja \
-  -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=clang-16 -DCMAKE_CXX_COMPILER=clang++-16 \
-  -DAURORA_SDL3_PROVIDER=vendor -DSDL_X11_XSCRNSAVER=OFF -DMKW_BUILD_PRODUCTS=ON
+  -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=clang-18 -DCMAKE_CXX_COMPILER=clang++-18 \
+  -DAURORA_SDL3_PROVIDER=vendor -DMKW_BUILD_PRODUCTS=ON
 cmake --build build-native --target WiiCompiled --parallel 6     # ~3.5 min clean at -j6
+```
+
+On Ubuntu 26.04, clang-16 with GCC 15's C++ library rejects an upstream `std::views::values`
+use in aurora's `pad.cpp`, so build with clang-18 (installed alongside). SDL's Linux backends
+need these development packages (the 26.04 upgrade removed them):
+
+```bash
+sudo apt install -y libdbus-1-dev libxcursor-dev libxrandr-dev libxtst-dev libxss-dev libibus-1.0-dev libwayland-dev wayland-protocols libdecor-0-dev libpipewire-0.3-dev libpulse-dev libsndio-dev liburing-dev libudev-dev libegl-dev libgbm-dev libdrm-dev libxkbcommon-x11-dev libusb-1.0-0-dev libsamplerate0-dev
 ```
 
 No source change was needed for Linux. Runtime assets (`dsp_coef.bin`, `wii_bootstrap/`,
