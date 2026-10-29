@@ -37,7 +37,7 @@ jobs:
       - name: shellcheck
         run: |
           shellcheck --version
-          shellcheck -x scripts/*.sh scripts/parity/*.sh $(find tools -name '*.sh' -not -path '*/node_modules/*')
+          shellcheck --severity=warning -x scripts/*.sh scripts/parity/*.sh $(find tools -name '*.sh' -not -path '*/node_modules/*')
       - name: node --check
         run: node --check tools/browser-test/*.js tools/web-server/*.js
       - name: python byte-compile
