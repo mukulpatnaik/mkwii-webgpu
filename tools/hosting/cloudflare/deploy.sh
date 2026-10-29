@@ -10,6 +10,8 @@
 #   --bucket NAME   your R2 bucket (private; created with --create the first time)
 #   --site DIR      the release folder to upload       (default work/sites/release/public)
 #   --create        create the bucket first (`wrangler r2 bucket create`)
+#   --no-upload     deploy the Worker only, with the bucket still empty: put Access in front of it
+#                   first, then run again without this flag to upload the files
 #   --dry-run       list what would be uploaded, upload nothing, deploy nothing
 #
 # Needs: Node (npx fetches wrangler 4), a Cloudflare account with R2 enabled, and one
@@ -21,13 +23,14 @@ ROOT="$(cd "$(dirname "$0")/../../.." && pwd)"
 HERE="$(cd "$(dirname "$0")" && pwd)"
 TOOLING="$ROOT/work/mariokartwebtest"
 RUN="${MKW_CF_RUN:-$ROOT/work/hosting/cloudflare}"
-worker=""; bucket=""; site="$ROOT/work/sites/release/public"; create=0; dry=0
+worker=""; bucket=""; site="$ROOT/work/sites/release/public"; create=0; dry=0; upload=1
 while [ $# -gt 0 ]; do
   case "$1" in
     --worker) worker="$2"; shift 2 ;;
     --bucket) bucket="$2"; shift 2 ;;
     --site) site="$2"; shift 2 ;;
     --create) create=1; shift ;;
+    --no-upload) upload=0; shift ;;
     --dry-run) dry=1; shift ;;
     -h|--help) sed -n 2,18p "$0"; exit 0 ;;
     *) echo "unknown option $1" >&2; exit 2 ;;
@@ -57,10 +60,20 @@ fi
 if [ "$create" = 1 ]; then
   (cd "$RUN" && npx --yes wrangler@4 r2 bucket create "$bucket")
 fi
-python3 "$TOOLING/tools/deploy-web.py" --worker
-cat <<EOF
+if [ "$upload" = 0 ]; then
+  (cd "$RUN" && npx --yes wrangler@4 deploy --config "$RUN/wrangler.jsonc")
+  cat <<EOF
 
-Deployed. Before sharing the address, put the Worker behind Cloudflare Access (one-time, dashboard):
+Worker deployed with an empty bucket (every path answers 404). Put Cloudflare Access in front of
+it now (steps below), check that its address shows a login page, then run this script again
+without --no-upload to upload the page files.
+EOF
+else
+  python3 "$TOOLING/tools/deploy-web.py" --worker
+  echo; echo "Deployed. Before sharing the address, the Worker must be behind Cloudflare Access:"
+fi
+cat <<EOF
+Cloudflare Access for this Worker (one-time, dashboard):
   1. https://dash.cloudflare.com -> Workers & Pages -> $worker -> the Access tab (or Settings).
   2. Enable Access for ALL hostnames of the Worker (not just previews), so the workers.dev
      address is covered.
