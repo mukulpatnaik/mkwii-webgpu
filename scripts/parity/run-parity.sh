@@ -60,7 +60,8 @@ fi
 sheet() {  # sheet <dir> <from-ms> <to-ms> <out.png>
   local dir="$1" from="$2" to="$3" png="$4" last="" f h n files=()
   [ -d "$dir" ] || return 0
-  for f in $(ls "$dir"); do
+  for f in "$dir"/*; do
+    f="${f##*/}"
     n=$((10#${f%.*}))
     [ "$n" -ge "$from" ] && [ "$n" -le "$to" ] || continue
     h="$(md5sum < "$dir/$f" | cut -c1-12)"

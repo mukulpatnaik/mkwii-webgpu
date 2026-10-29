@@ -72,7 +72,7 @@ burst() {  # burst <name> <seconds>: back-to-back window grabs, in the backgroun
       xwd -id "$win" -silent -out "$dir/$(printf %06d $(( $(date +%s%3N) - t0 ))).xwd" 2>/dev/null || break
     done
     for f in "$dir"/*.xwd; do convert "$f" "${f%.xwd}.png" && rm -f "$f"; done
-    echo "$(date +%T) burst $1: $(ls "$dir" | wc -l) frames" >> "$outdir/driver.log"
+    echo "$(date +%T) burst $1: $(find "$dir" -name '*.png' | wc -l) frames" >> "$outdir/driver.log"
   ) &
 }
 
@@ -84,6 +84,7 @@ press() {  # press <a|keysym> <ms>
   timeout 3 xdotool windowactivate "$client" 2>/dev/null || true
   if [ "$what" = a ]; then
     eval "$(xwininfo -id "$client" | awk '/Absolute upper-left X/{print "cx="$4} /Absolute upper-left Y/{print "cy="$4} /Width:/{print "cw="$2} /Height:/{print "ch="$2}')"
+    # shellcheck disable=SC2154  # cx, cy, cw and ch are set by the eval above
     timeout 5 xdotool mousemove "$((cx + cw / 2))" "$((cy + ch / 2))" sleep 0.1 mousedown 1 sleep "$secs" mouseup 1 || true
   else
     timeout 5 xdotool keydown "$what" sleep "$secs" keyup "$what" || true
