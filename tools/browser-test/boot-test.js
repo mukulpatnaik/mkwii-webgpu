@@ -2,7 +2,8 @@
 // collect the console, and screenshot the canvas at intervals. Usage:
 //   node boot-test.js <url> <seconds> <outdir>
 // With MKW_DISC=/path/to/your/disc.wbfs, the page's disc picker is given that file (read locally
-// by the page, never copied) for a site without a staged game folder.
+// by the page, never copied) for a site without a staged game folder. MKW_HTTP_USER and
+// MKW_HTTP_PASSWORD answer a server's HTTP basic auth challenge (tools/hosting/serve-nginx.sh --user).
 const { chromium } = require('playwright-core');
 const fs = require('fs');
 const path = require('path');
@@ -24,7 +25,11 @@ fs.mkdirSync(outdir, { recursive: true });
     ],
     ignoreDefaultArgs: ['--disable-gpu', '--mute-audio'],
   });
-  const page = await browser.newPage({ viewport: { width: 1280, height: 860 } });
+  const page = await browser.newPage({
+    viewport: { width: 1280, height: 860 },
+    httpCredentials: process.env.MKW_HTTP_USER
+      ? { username: process.env.MKW_HTTP_USER, password: process.env.MKW_HTTP_PASSWORD || '' } : undefined,
+  });
   const log = fs.createWriteStream(path.join(outdir, 'console.log'));
   page.on('console', (m) => log.write(`[${m.type()}] ${m.text()}\n`));
   page.on('pageerror', (e) => log.write(`[pageerror] ${e.message}\n`));

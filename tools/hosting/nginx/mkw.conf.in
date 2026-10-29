@@ -1,0 +1,65 @@
+# nginx configuration for the private browser build, written out by tools/hosting/serve-nginx.sh
+# (which fills in the @VARIABLES@) and run unprivileged: every path is under the run directory.
+#
+# What the page needs from a host, whichever server you use:
+#   - cross-origin isolation headers on every response (threads need SharedArrayBuffer),
+#   - byte-range requests (the .wasm is fetched whole, but a staged game folder is read in ranges),
+#   - application/wasm for .wasm,
+#   - a secure context: HTTPS, or 127.0.0.1/localhost. Plain http:// on a LAN or VPN address is
+#     NOT a secure context, so the game will not start there.
+#   - access control: the .wasm contains translated game code.
+pid @RUN@/nginx.pid;
+error_log @RUN@/error.log;
+daemon off;
+worker_processes 2;
+
+events { worker_connections 256; }
+
+http {
+    access_log @RUN@/access.log;
+    client_body_temp_path @RUN@/tmp;
+    proxy_temp_path @RUN@/tmp;
+    fastcgi_temp_path @RUN@/tmp;
+    uwsgi_temp_path @RUN@/tmp;
+    scgi_temp_path @RUN@/tmp;
+
+    default_type application/octet-stream;
+    types {
+        text/html html;
+        text/javascript js mjs;
+        application/wasm wasm;
+        application/json json;
+        text/plain txt;
+        text/css css;
+        image/png png;
+        image/jpeg jpg;
+    }
+    sendfile on;
+    tcp_nopush on;
+    # Ranges on static files are on by default (max_ranges unlimited); the page sends one range per request.
+
+    server {
+        listen @BIND@:@PORT@@SSL@;
+        @TLS@
+        root @ROOT@;
+        index WiiCompiled.html;
+        @AUTH@
+
+        # add_header is not inherited into a location that sets its own, so every block includes it.
+        include @RUN@/isolation.conf;
+        add_header Cache-Control "private, no-cache" always;
+
+        # The extracted disc never changes: a day in the browser cache saves a revalidation per file.
+        location /game/DATA/ {
+            include @RUN@/isolation.conf;
+            add_header Cache-Control "private, max-age=86400" always;
+        }
+        # Content-addressed menu previews and file packs: the name changes when the bytes do.
+        location ~ ^/game/(web-videos|file-packs)/ {
+            include @RUN@/isolation.conf;
+            add_header Cache-Control "private, max-age=31536000, immutable" always;
+        }
+        # Pages opened with ?log POST their console here; nginx has nowhere to put it.
+        location = /log { return 204; }
+    }
+}

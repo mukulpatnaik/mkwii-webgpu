@@ -29,9 +29,11 @@ python3 work/mariokartwebtest/tools/serve.py work/sites/release/public --port 80
 
 The host must send `Cross-Origin-Opener-Policy: same-origin`,
 `Cross-Origin-Embedder-Policy: require-corp` and `Cross-Origin-Resource-Policy: same-origin`, and
-`application/wasm` for `.wasm`. It must be behind access control. Scripted hosting (Cloudflare
-Access, or Caddy/nginx with auth or Tailscale) is the deferred Track C; until then there is no
-supported way to give friends access, only the local server above (127.0.0.1 only).
+`application/wasm` for `.wasm`, and be a secure context (HTTPS, or 127.0.0.1). It must be behind
+access control. `tools/hosting/stage-release.sh` stages the folder (with `--with-game` it also
+links the staged game folder) and [hosting.md](hosting.md) gives the scripted ways to serve it:
+nginx or Caddy on your machine behind Tailscale or a password, or a Cloudflare Worker with R2
+behind Cloudflare Access.
 
 ## Verified on this machine (RTX 4090, Chrome 154, Linux, 60 Hz display)
 
@@ -84,6 +86,9 @@ supported way to give friends access, only the local server above (127.0.0.1 onl
 
 ## How friends get access
 
-Not settled: needs Track C (hosting behind access control). Each friend must own the game and pick
-their own disc image; the owner shares only the page URL and the access credential, never the
-`.wasm` file or any game data.
+See [hosting.md](hosting.md): Tailscale in front of nginx or `mkw-web` for a few friends, Caddy or
+nginx with HTTPS and a password on a reachable machine, or Cloudflare Worker + R2 + Access. All
+scripted under `tools/hosting/`; nginx and the Worker (local emulation) were tested with real
+Chrome runs on 2026-10-28, Tailscale, Caddy and a real Cloudflare deploy were not. Each friend
+must own the game and pick their own disc image; the owner shares only the page URL and the
+access credential, never the `.wasm` file or any game data.

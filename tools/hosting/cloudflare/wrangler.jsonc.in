@@ -1,0 +1,12 @@
+// Wrangler configuration for your own copy of the page Worker, written out by
+// tools/hosting/cloudflare/deploy.sh into work/hosting/cloudflare/wrangler.jsonc.
+// The Worker code is Minithena's tools/cloudflare/worker.js (work/mariokartwebtest): it serves
+// whatever the R2 bucket holds with the cross-origin isolation headers and single-range responses.
+{
+  "name": "@WORKER@",
+  "main": "@WORKER_JS@",
+  "compatibility_date": "2026-09-01",
+  "workers_dev": true,
+  "preview_urls": false,
+  "r2_buckets": [{ "binding": "BUCKET", "bucket_name": "@BUCKET@" }]
+}

@@ -1,0 +1,21 @@
+# Caddyfile for the private browser build, written out by tools/hosting/serve-caddy.sh.
+# Caddy answers byte ranges and knows application/wasm by itself, and gets a certificate on its
+# own for a public hostname (Let's Encrypt), so this is the shortest way to HTTPS plus a password.
+# For a tailnet-only host use `tls internal` is not enough (friends would have to trust the CA);
+# prefer `tailscale serve` in front of a 127.0.0.1 listener instead.
+@SITE@ {
+    root * @ROOT@
+    @AUTH@
+    header {
+        Cross-Origin-Opener-Policy same-origin
+        Cross-Origin-Embedder-Policy require-corp
+        Cross-Origin-Resource-Policy same-origin
+        Cache-Control "private, no-cache"
+    }
+    @disc path /game/DATA/*
+    header @disc Cache-Control "private, max-age=86400"
+    @immutable path /game/web-videos/* /game/file-packs/*
+    header @immutable Cache-Control "private, max-age=31536000, immutable"
+    respond /log 204
+    file_server
+}
