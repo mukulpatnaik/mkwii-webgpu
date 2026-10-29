@@ -1,0 +1,73 @@
+# Game-free checks for this repository: the shell scripts, the JavaScript test drivers and the
+# Python helpers parse, and the disc-reader spike builds for wasm32. The game itself cannot be
+# built here (it needs the owner's disc); the fork's own checks (work/Wiicompiled,
+# .github/workflows/web-checks.yml) cover the translator, runtime and browser platform tests.
+# Pinned versions mirror scripts/versions.env.
+name: Checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Scripts parse and lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+      - name: Install shellcheck
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y shellcheck
+      - name: shellcheck
+        run: |
+          shellcheck --version
+          shellcheck -x scripts/*.sh scripts/parity/*.sh $(find tools -name '*.sh' -not -path '*/node_modules/*')
+      - name: node --check
+        run: node --check tools/browser-test/*.js tools/web-server/*.js
+      - name: python byte-compile
+        run: python3 -m py_compile $(find scripts tools -name '*.py' -not -path '*/node_modules/*')
+      - name: scripts/doctor.sh parses and its versions file sources
+        run: bash -n scripts/doctor.sh && bash -c 'source scripts/versions.env && echo "emsdk $EMSDK_VERSION"'
+
+  disc-wasm:
+    name: Disc reader spike builds for wasm32
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      # The spike depends on nod by path (upstream/nod, cloned by scripts/clone-upstream.sh at
+      # the pinned revision); only that one upstream is needed here.
+      - name: Clone nod at the pinned revision
+        run: |
+          git clone -q https://github.com/encounter/nod.git upstream/nod
+          git -C upstream/nod checkout -q ebd80cac99b48a323200d84365e07a58cc27412d
+      - uses: actions/cache@v5
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            spikes/disc-wasm/target
+          key: ${{ runner.os }}-cargo-disc-wasm-${{ hashFiles('spikes/disc-wasm/Cargo.lock') }}
+      - run: cargo build --release --target wasm32-unknown-unknown --manifest-path spikes/disc-wasm/Cargo.toml
+      - run: ls -la spikes/disc-wasm/target/wasm32-unknown-unknown/release/*.wasm
