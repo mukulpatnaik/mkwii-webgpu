@@ -26,7 +26,7 @@ Cloned under `upstream/` (gitignored; `scripts/clone-upstream.sh` re-creates the
 | OtherShindo957/WiicompiledWeb | `e1e4ba0c4de76f66ad9be11baf2b7d5e4ec9a282` | 2026-09-26 | WiiCompiled fork executing a browser-port plan nearly identical to ours |
 | akratch/goldenballoon | `106bad37244a2f8829bab21c655d25ff4b4dcdbf` | 2026-09-11 | N64 kart racer that ships a browser build; patterns for shell, saves, pacing |
 | **Minithena/Wiicompiled**, branch `web` | `40ff69a9a6d4d9e8ee78f3b34a352ceb5767aab1` | 2026-10-02 | **A working browser port of WiiCompiled** (43 commits over upstream `9b7b991`, 2026-09-30). Our working fork is based on this |
-| **Minithena/mariokartwebtest** | `384cffac` | 2026-10-02 | Page tooling, Cloudflare Worker/R2 hosting, Durable Object room relay, benchmarks, handover notes |
+| **Minithena/mariokartwebtest** | `384cffac` | 2026-10-02 | Page tooling, Cloudflare Worker/R2 hosting, Durable Object room relay, benchmarks, handover notes. **Gone from GitHub (404) by 2026-10-28**, no DMCA notice found; our complete clones are `upstream/mariokartwebtest` (pristine), `work/mariokartwebtest` (with our commits) and the private backup `mukulpatnaik/mkwii-webgpu-webtest` |
 
 WiiCompiled's vendored `aurora-main/` was imported at commit `ec226e8 init` (2026-08-23) and has 24
 fork commits since. `patchzyy/aurora` on GitHub mirrors it (24 ahead, 191 behind upstream). It is a
