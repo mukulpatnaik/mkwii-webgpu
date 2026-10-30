@@ -58,7 +58,9 @@ behind Cloudflare Access.
       ideally, a Chrome trace with `frame-trace.py`). Only emulated so far (`?rafhz=`).
 - [ ] 59.94 Hz display: expect one repeated frame about every 16 s (VI runs at 60.0024 Hz by design).
 - [ ] Four real pads at once: ports 1-4, a 4-player VS race, rumble, hot-plug.
-- [ ] Two-machine online invite room (Minithena's relay; never tested on NTSC-U here).
+- [ ] Two-machine online invite room. Two clients on one machine through the vendored relay
+      (`tools/relay`, `tools/browser-test/room-test.js`) raced together on NTSC-U on 2026-10-29
+      (docs/hosting.md, Evidence); two machines and a deployed relay are still untested.
 - [ ] A friend's own disc (a different dump of the same release, and a PAL disc against an
       NTSC-U build: the page should refuse a mismatched release with a clear message).
 - [ ] Input latency feel with display-tied presentation vs `?present=immediate`.

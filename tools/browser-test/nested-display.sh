@@ -10,7 +10,15 @@
 # Headless Chrome does not get a WebGPU adapter on this machine.
 set -euo pipefail
 n="${1:?usage: $0 <display-number>}"
-if ! [ -e "/tmp/.X11-unix/X$n" ]; then
+alive() {
+  [ -e "/tmp/.X11-unix/X$n" ] || return 1
+  # A socket an earlier Xephyr left behind is not a display: ask the server when xdpyinfo is there.
+  ! command -v xdpyinfo >/dev/null || timeout 5 xdpyinfo -display ":$n" >/dev/null 2>&1
+}
+if ! alive; then
+  if [ -e "/tmp/.X11-unix/X$n" ] && ! pgrep -f "Xephyr :$n( |\$)" >/dev/null; then
+    rm -f "/tmp/.X11-unix/X$n" "/tmp/.X$n-lock"
+  fi
   DISPLAY="${OUTER_DISPLAY:-:0}" setsid Xephyr ":$n" -screen 1280x900 -br -ac -nolisten tcp \
     -title "mkw test :$n" >"/tmp/xephyr-$n.log" 2>&1 < /dev/null &
   for _ in $(seq 50); do [ -e "/tmp/.X11-unix/X$n" ] && break; sleep 0.1; done

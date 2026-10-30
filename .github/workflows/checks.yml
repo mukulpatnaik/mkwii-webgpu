@@ -1,5 +1,6 @@
 # Game-free checks for this repository: the shell scripts, the JavaScript test drivers and the
-# Python helpers parse, and the disc-reader spike builds for wasm32. The game itself cannot be
+# Python helpers parse, the page Worker and the room relay pass their unit tests, and the
+# disc-reader spike builds for wasm32. The game itself cannot be
 # built here (it needs the owner's disc); the fork's own checks (work/Wiicompiled,
 # .github/workflows/web-checks.yml) cover the translator, runtime and browser platform tests.
 # Pinned versions mirror scripts/versions.env.
@@ -39,9 +40,11 @@ jobs:
           shellcheck --version
           shellcheck --severity=warning -x scripts/*.sh scripts/parity/*.sh $(find tools -name '*.sh' -not -path '*/node_modules/*')
       - name: node --check
-        run: node --check tools/browser-test/*.js tools/web-server/*.js tools/hosting/cloudflare/*.js
+        run: node --check tools/browser-test/*.js tools/web-server/*.js tools/hosting/cloudflare/*.js tools/relay/src/*.js
       - name: Worker unit tests
         run: node --test tools/hosting/cloudflare/worker.test.mjs
+      - name: Room relay unit tests (tools/relay, AGPL-3.0)
+        run: node --test tools/relay/test/rooms.test.mjs
       - name: python byte-compile
         run: python3 -m py_compile $(find scripts tools -name '*.py' -not -path '*/node_modules/*')
       - name: scripts/doctor.sh parses and its versions file sources

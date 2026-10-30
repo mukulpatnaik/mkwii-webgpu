@@ -27,6 +27,9 @@ DISPLAY=$(./nested-display.sh 6) node boot-test.js "http://127.0.0.1:$PORT/WiiCo
 ```
 
 `boot-test.js <url> <seconds> <outdir>`: clicks Start, screenshots every 10 s, writes `console.log`.
+`room-test.js <url> <outdir>`: two Chrome profiles (`MKW_DISPLAY_A`, `MKW_DISPLAY_B` for two nested
+displays) create and join a room through the local relay (`tools/relay/dev-local.sh`), press Play
+online and race together; see its header. Needs a site with a staged game folder.
 `drive.js <url> <outdir>`: polls `<outdir>/cmds`; commands are `click [x y]`, `key <Name> [holdMs]`,
 `wait <ms>`, `shot <name>`, `eval <js>`, `quit`. Left click is A. The title drops into the attract
 demo after a few seconds: click once to cancel it, then again on the settled title.

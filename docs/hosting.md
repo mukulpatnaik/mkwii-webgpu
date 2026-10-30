@@ -132,9 +132,8 @@ covering its `workers.dev` address as well as routes and custom domains):
 
 Deploy before the policy exists and the `.wasm` is public for that interval; do steps 1 to 4
 right after the first deploy, or create the Worker and the policy first and deploy afterwards.
-Access blocks WebSockets, which is why a room relay for online play would run as a separate
-Worker outside it; it serves no game files. (Minithena's relay was AGPL-3.0; this project does
-not ship one yet.)
+Access blocks WebSockets, which is why the room relay for online play runs as a separate Worker
+outside it; it serves no game files (see "Online play" below).
 
 Measured by Minithena from the US east coast against a Western Europe bucket: 0.4 to 0.5 s per
 request, which is why a `--with-game` deployment loads races slowly from far away. Players'
@@ -142,6 +141,55 @@ own discs (the default) do not have that problem: only the 107 MB `.wasm` is dow
 
 Rehearsal without an account: `tools/hosting/cloudflare/dev-local.sh` loads the release folder
 into wrangler's local R2 emulation and runs the same Worker on `127.0.0.1:8787`.
+
+## Online play: the room relay
+
+Online races go through a room relay: each invite is one Cloudflare Durable Object; the game's
+Nintendo WFC traffic (TCP) and the race's peer packets (UDP) travel over one WebSocket per player
+to it, and it answers as the matchmaking server itself, so only the people holding the invite can
+meet, and nothing contacts Nintendo or Wiimmfi. It serves no game files. The relay is Minithena's
+`tools/cloudflare/rooms` Worker, vendored unchanged as [`tools/relay/`](../tools/relay/). It is
+**AGPL-3.0-only** (its own [LICENSE](../tools/relay/LICENSE)), not GPLv3 like the rest of this
+project, and it is a separate program: the page only talks to it over WebSockets. Its README
+describes the protocol and the lobby endpoint.
+
+Locally nothing needs an account. A page served from `127.0.0.1` or `localhost` connects to
+`ws://127.0.0.1:8787`, which is where this runs it (wrangler's local Durable Object emulation;
+state and scratch files under `work/relay/`):
+
+```bash
+tools/relay/dev-local.sh --trace                             # Ctrl+C stops it; --trace logs player-to-player packet rates
+node --test tools/relay/test/rooms.test.mjs                  # unit tests (also in CI)
+node tools/relay/test/live-smoke.mjs http://127.0.0.1:8787   # protocol smoke test against the running relay
+```
+
+Then open the page in two browsers that do not share a save (two Chrome profiles, or `127.0.0.1`
+for one player and `localhost` for the other), **Create room** in one, **Join room** with the code
+(or open the copied invite link) in the other, set a name, and **Play online** in both: the game
+connects to the room, logs in, opens character selection, and the two players match each other
+and race. Each player needs a game profile (a licence with a Mii) in that browser first; a fresh
+browser makes one through the game's own setup screens. `tools/browser-test/room-test.js` does
+all of this with two real Chrome clients on two nested displays (see "Evidence").
+
+For a hosted site the relay is deployed to your own Cloudflare account as a second Worker, next
+to the page Worker but **not** behind Access (Access blocks WebSockets; the relay has no game
+files, and the long random invite code is the only key):
+
+```bash
+cd tools/relay && npx wrangler@4 deploy      # -> https://mkw-rooms.<your-subdomain>.workers.dev
+```
+
+and the page is told where it is when the release folder is staged:
+
+```bash
+tools/hosting/stage-release.sh --rooms-host mkw-rooms.<your-subdomain>.workers.dev
+```
+
+That sets the page's `<meta name="mkw-rooms-host">` tag, which the fork's `shell.html` reads for
+any page not served from `127.0.0.1`/`localhost`. The tag's built-in value is Minithena's
+`mkw-rooms.athenaaa.workers.dev` (it still answered on 2026-10-29, but it is theirs: deploy your
+own). `?room=ws://host/v1/rooms/<code>/ws` on the page overrides both the local and the hosted
+choice, for diagnostics. The relay has not been deployed from this machine.
 
 ## What you supply, and what never leaves your machine
 
@@ -151,6 +199,7 @@ into wrangler's local R2 emulation and runs the same Worker on `127.0.0.1:8787`.
 | A DNS name pointing at your machine and forwarded ports 80/443 (1b), or a certificate (1c) | Caddy / nginx |
 | A user name and password for basic auth (1b, 1c); say them to friends out of band | `--user` |
 | A Cloudflare account with R2 and Zero Trust, `npx wrangler@4 login`, Worker and bucket names, friends' e-mail addresses (2) | `deploy.sh`, the dashboard |
+| For online play: the relay deployed to the same account (`npx wrangler@4 deploy` in `tools/relay`) and its host name | `stage-release.sh --rooms-host` |
 
 The disc image is never part of a deployment. The `--with-game` folder is the extracted disc and
 goes only to hosts behind access control.
@@ -172,9 +221,12 @@ under `tools/browser-test/out/hosting/` (gitignored: screenshots show the game).
 | Cloudflare deploy, dry run | `deploy.sh --dry-run` | 6 of 6 files (114 MB) without a game folder; 1896 files (2552 MB) with one |
 | Real Cloudflare deploy behind Access | `deploy.sh --create --no-upload`, Access enabled in the dashboard, then `deploy.sh` | 2026-10-29: Worker and bucket created, Access (one-time PIN, Allow policy on named e-mails) attached to all hostnames, then 6 files (114 MB) uploaded; three objects fetched back through the R2 API hash-match the staged files; anonymous requests to every path, `/log` included, get a 302 to the Access login and nothing else. Later the same day the Worker was redeployed with this project's `worker.js` (`deploy.sh --no-upload`, version `357c596e`); anonymous GET, HEAD and `POST /log` on every path still get only the 302. Not yet checked: a Chrome boot through the login from this machine (the test window timed out before the PIN) and play from a remote network |
 
+| Online play, two clients through the local relay | `tools/relay/dev-local.sh --trace`, `serve.py` on a `--with-game` folder, `tools/browser-test/room-test.js` on two nested displays | 2026-10-29, fork at the commit this was written with (NTSC-U build): relay unit tests 17 pass, `live-smoke.mjs` PASS against wrangler dev. Two fresh Chrome profiles: each created a game profile through the game's setup screens; A `Create room`, B `Join room` with the code; the lobby roster showed both names on both pages; `Play online` in both gave `[vnet] joined the room as 10.77.0.1` / `10.77.0.2`, the relay's `[wfc] NAS login`, `GPCM login` and `logged in as profile` lines for both, `[room-launch] login complete; matching page activated` and `character selection ready` on both; after character, vehicle and drift the game's Check Members screen listed Alice and Bob, both voted, and both loaded Luigi Circuit (`[web-warm] course file beginner_course.szs` on both, each other's name tag in the race, roster `In game` for both) at `[web-pace] race steps/s=60.0` and `[web-perf] fps=60.0`, with the relay logging about 65-70 packets per 2 s in each direction (`out/relay/run4`, `run5`). The first NTSC-U attempt stopped at "Your saved profile needs attention": NTSC-U queues its ESRB notice before the title, which the launcher now accepts (fork change) |
+
 In every run the browser's only 404s were the page's own probes for optional files
 (`game/manifest-v2.txt` and `mkw-server-disc.json` on a site without them, `game/background.jpg`,
 `favicon.ico`); they are how the page decides between a staged folder and the player's disc.
 
 Not verified: Tailscale and Caddy (not installed here), nginx over HTTPS with a real certificate,
-and play from a remote network.
+play from a remote network, and the relay deployed to Cloudflare (only wrangler's local emulation
+was run; the deploy command is in "Online play").

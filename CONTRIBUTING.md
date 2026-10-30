@@ -45,4 +45,6 @@ say in the pull request what you ran and paste the healthy console lines (`[web-
 
 ## Licence
 
-Contributions are under GPLv3, like the rest of the project.
+Contributions are under GPLv3, like the rest of the project, except in `tools/relay/`: that
+folder is Minithena's room relay under the AGPL-3.0-only (its own `LICENSE`), and changes to it
+stay under that licence.

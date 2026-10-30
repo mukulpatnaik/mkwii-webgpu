@@ -33,6 +33,7 @@ harness, and private hosting. State and evidence: [docs/release-checklist.md](do
 | `tools/browser-test/` | Playwright drivers for the real Chrome on the X display: boot, Grand Prix drive, pacing trace, saves, pads |
 | `tools/web-server/` | `mkw-web`: a one-file local server that embeds the page files and offers your disc to the page |
 | `tools/hosting/` | Private hosting: Cloudflare Worker + R2 behind Access, or a single machine with Caddy/nginx or Tailscale |
+| `tools/relay/` | The room relay for online play: Minithena's Cloudflare Worker, vendored unchanged. **AGPL-3.0**, its own `LICENSE`; local run, tests, deploy command |
 | `spikes/` | `disc-wasm` (nod for wasm32, now the product's disc reader in the fork) and `wasm-lean-runtime` |
 | `work/` (gitignored) | `Wiicompiled`: the fork, branch `athena-web-ntsc`; builds, staged sites, release directories |
 | `upstream/` (gitignored) | Read-only clones of the repositories studied, pinned by `scripts/clone-upstream.sh` |
@@ -42,8 +43,10 @@ The fork is its own git repository:
 [mukulpatnaik/mkwii-webgpu-wiicompiled](https://github.com/mukulpatnaik/mkwii-webgpu-wiicompiled)
 (branch `athena-web-ntsc`; `minithena-web` keeps Minithena's web branch as it was). Minithena's
 separate page tooling (`Minithena/mariokartwebtest`: staging, a Cloudflare Worker, a room relay)
-disappeared from GitHub on or before 2026-10-28 and carried no licence, so nothing of it is in
-this repository; the pieces this project needs were written again under `tools/hosting/`.
+disappeared from GitHub on or before 2026-10-28. It carried no licence apart from its room
+relay (`tools/cloudflare/rooms`, AGPL-3.0), which is here unchanged as `tools/relay/`; nothing
+else of it is in this repository, and the pieces this project needs were written again under
+`tools/hosting/`.
 Their WiiCompiled fork (`Minithena/Wiicompiled`, branch `web`, GPLv3) is still up.
 
 ## Quick start (Linux)
@@ -78,7 +81,8 @@ Hosting for friends who own the game: [docs/hosting.md](docs/hosting.md). Contro
 
 ## Checks
 
-`.github/workflows/checks.yml` lints the scripts and builds the disc-reader spike; the fork's
+`.github/workflows/checks.yml` lints the scripts, runs the page Worker's and the room relay's
+unit tests and builds the disc-reader spike; the fork's
 `.github/workflows/web-checks.yml` runs the translator tests, the runtime unit tests compiled to
 wasm (`MKW_BUILD_PRODUCTS=OFF`) and the Node tests. Neither needs game data. The game-level
 regression (boot, Grand Prix drive, saves, pads, parity) only runs on a machine with the disc:
@@ -105,3 +109,9 @@ opening a pull request.
 
 GPLv3 ([LICENSE](LICENSE)), like WiiCompiled. The fork's web branch contains work by Minithena
 (Athena), DarthMDev, Rookie and others under the same licence; see its history.
+
+The one exception is [`tools/relay/`](tools/relay/), the room relay for online play: Minithena's
+Cloudflare Worker, vendored unchanged, under the **GNU Affero General Public License v3.0 only**
+([tools/relay/LICENSE](tools/relay/LICENSE)). It is a separate program that runs as its own
+service; the page only talks to it over WebSockets, and nothing of it is compiled into the game
+page. Anyone who runs a modified relay for others must offer them its source, as the AGPL requires.
