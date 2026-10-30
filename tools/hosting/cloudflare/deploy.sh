@@ -63,9 +63,9 @@ if [ "$upload" = 0 ]; then
   (cd "$RUN" && npx --yes wrangler@4 deploy --config "$RUN/wrangler.jsonc")
   cat <<EOF
 
-Worker deployed with an empty bucket (every path answers 404). Put Cloudflare Access in front of
-it now (steps below), check that its address shows a login page, then run this script again
-without --no-upload to upload the page files.
+Worker code deployed; no files were uploaded (a new bucket stays empty and every path answers
+404). First time: put Cloudflare Access in front of the Worker now (steps below), check that its
+address shows a login page, then run this script again without --no-upload to upload the files.
 EOF
 else
   "${upload_cmd[@]}" --deploy-worker
