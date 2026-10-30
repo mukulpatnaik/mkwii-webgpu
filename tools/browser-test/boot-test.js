@@ -36,6 +36,8 @@ fs.mkdirSync(outdir, { recursive: true });
   page.on('crash', () => log.write('[crash] page crashed\n'));
   await page.goto(url, { waitUntil: 'domcontentloaded' });
   if (process.env.MKW_DISC) {
+    // A login page (Cloudflare Access) may come first; wait for the real page, up to five minutes.
+    await page.waitForSelector('#disc-file', { state: 'attached', timeout: 300000 });
     await page.setInputFiles('#disc-file', process.env.MKW_DISC);
     console.log('picked the disc image');
   }

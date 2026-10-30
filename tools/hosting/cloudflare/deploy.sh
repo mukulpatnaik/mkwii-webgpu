@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Host the release folder on Cloudflare: a Worker (Minithena's tools/cloudflare/worker.js) in
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Host the release folder on Cloudflare: the page Worker (worker.js, next to this script) in
 # front of a private R2 bucket, protected by Cloudflare Access. This script prepares your
 # wrangler config and uploads; it never changes Access itself (that is a dashboard step, printed
 # at the end).
@@ -21,7 +22,6 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../../.." && pwd)"
 HERE="$(cd "$(dirname "$0")" && pwd)"
-TOOLING="$ROOT/work/mariokartwebtest"
 RUN="${MKW_CF_RUN:-$ROOT/work/hosting/cloudflare}"
 worker=""; bucket=""; site="$ROOT/work/sites/release/public"; create=0; dry=0; upload=1
 while [ $# -gt 0 ]; do
@@ -32,28 +32,27 @@ while [ $# -gt 0 ]; do
     --create) create=1; shift ;;
     --no-upload) upload=0; shift ;;
     --dry-run) dry=1; shift ;;
-    -h|--help) sed -n 2,18p "$0"; exit 0 ;;
+    -h|--help) sed -n 3,19p "$0"; exit 0 ;;
     *) echo "unknown option $1" >&2; exit 2 ;;
   esac
 done
 [ -n "$worker" ] && [ -n "$bucket" ] || { echo "--worker NAME and --bucket NAME are required" >&2; exit 2; }
 [[ "$worker" =~ ^[a-z0-9][a-z0-9-]*$ && "$bucket" =~ ^[a-z0-9][a-z0-9-]*$ ]] || { echo "names: lowercase letters, digits, dashes" >&2; exit 2; }
-[ -f "$TOOLING/tools/cloudflare/worker.js" ] || { echo "no Worker at $TOOLING/tools/cloudflare/worker.js" >&2; exit 1; }
 [ -f "$site/WiiCompiled.html" ] || { echo "no WiiCompiled.html in $site: run tools/hosting/stage-release.sh" >&2; exit 1; }
 site="$(cd "$site" && pwd)"
 
 mkdir -p "$RUN"
-sed -e "s|@WORKER@|$worker|g" -e "s|@BUCKET@|$bucket|g" -e "s|@WORKER_JS@|$TOOLING/tools/cloudflare/worker.js|g" \
+sed -e "s|@WORKER@|$worker|g" -e "s|@BUCKET@|$bucket|g" -e "s|@WORKER_JS@|$HERE/worker.js|g" \
     "$HERE/wrangler.jsonc.in" > "$RUN/wrangler.jsonc"
-export MKW_SITE_DIR="$site" MKW_R2_BUCKET="$bucket" MKW_WRANGLER_CONFIG="$RUN/wrangler.jsonc"
 echo "Worker $worker, bucket $bucket, site $site (config $RUN/wrangler.jsonc)"
+upload_cmd=(python3 "$HERE/upload-r2.py" --site "$site" --bucket "$bucket" --config "$RUN/wrangler.jsonc")
 
 if [ "$dry" = 1 ]; then
-  python3 "$TOOLING/tools/deploy-web.py" --dry-run
+  "${upload_cmd[@]}" --dry-run
   echo "Dry run: nothing deployed. Without --dry-run this would run:"
   [ "$create" = 1 ] && echo "  npx wrangler@4 r2 bucket create $bucket"
   echo "  npx wrangler@4 deploy --config $RUN/wrangler.jsonc"
-  echo "  python3 $TOOLING/tools/deploy-web.py          # uploads changed files to R2"
+  echo "  ${upload_cmd[*]}          # uploads changed files to R2"
   exit 0
 fi
 
@@ -69,7 +68,7 @@ it now (steps below), check that its address shows a login page, then run this s
 without --no-upload to upload the page files.
 EOF
 else
-  python3 "$TOOLING/tools/deploy-web.py" --worker
+  "${upload_cmd[@]}" --deploy-worker
   echo; echo "Deployed. Before sharing the address, the Worker must be behind Cloudflare Access:"
 fi
 cat <<EOF

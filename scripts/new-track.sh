@@ -12,7 +12,7 @@
 #
 #   eval "$(scripts/new-track.sh a)"
 #   scripts/build-private-bundle.sh --skip-extract --skip-translate
-#   python3 work/mariokartwebtest/tools/serve.py "$SITE_DIR" --port "$PORT"
+#   tools/hosting/serve.py "$SITE_DIR" --port "$PORT"
 set -euo pipefail
 
 name="${1:-}"

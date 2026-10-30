@@ -97,14 +97,6 @@ if [ -d "$fork/.git" ]; then
 else
   fail "work/Wiicompiled missing: git clone -b athena-web-ntsc https://github.com/mukulpatnaik/mkwii-webgpu-wiicompiled.git work/Wiicompiled"
 fi
-tooling="$ROOT/work/mariokartwebtest"
-if [ -d "$tooling/.git" ]; then
-  ok "work/mariokartwebtest present"
-  if [ -L "$tooling/wiicompiled" ] && [ "$(readlink -f "$tooling/wiicompiled")" = "$(readlink -f "$fork")" ]; then ok "work/mariokartwebtest/wiicompiled -> work/Wiicompiled"
-  else warn "work/mariokartwebtest/wiicompiled should be a symlink to work/Wiicompiled: ln -sfn ../Wiicompiled $tooling/wiicompiled"; fi
-else
-  fail "work/mariokartwebtest missing: git clone https://github.com/mukulpatnaik/mkwii-webgpu-webtest.git work/mariokartwebtest"
-fi
 if [ -d "$ROOT/upstream/nod" ]; then ok "upstream/nod present (spikes/disc-wasm)"; else note "upstream/ not cloned (scripts/clone-upstream.sh; only needed for the spikes and research)"; fi
 if [ -d "$ROOT/tools/browser-test/node_modules/playwright-core" ]; then ok "tools/browser-test dependencies installed"; else note "tools/browser-test: run npm install there before browser tests"; fi
 

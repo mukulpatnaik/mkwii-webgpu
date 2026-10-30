@@ -1,5 +1,10 @@
 # Handoff prompt: private self-hosted release (paste into a new session)
 
+> Kept as project history (written 2026-10-02; the tracks below were finished on 2026-10-28).
+> Paths have moved since: Minithena's `work/mariokartwebtest` tooling is no longer used, its
+> replacements are under `tools/hosting/`, and the current state is in the README and
+> `docs/release-checklist.md`.
+
 Use a workflow to orchestrate this. Run it from `/home/mukul/code/mkwii-webgpu`.
 
 ## Where things stand (2026-10-02)

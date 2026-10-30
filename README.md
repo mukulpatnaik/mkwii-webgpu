@@ -34,16 +34,17 @@ harness, and private hosting. State and evidence: [docs/release-checklist.md](do
 | `tools/web-server/` | `mkw-web`: a one-file local server that embeds the page files and offers your disc to the page |
 | `tools/hosting/` | Private hosting: Cloudflare Worker + R2 behind Access, or a single machine with Caddy/nginx or Tailscale |
 | `spikes/` | `disc-wasm` (nod for wasm32, now the product's disc reader in the fork) and `wasm-lean-runtime` |
-| `work/` (gitignored) | `Wiicompiled`: the fork, branch `athena-web-ntsc`; `mariokartwebtest`: Minithena's page tooling (staging, Cloudflare, room relay); builds, staged sites, release directories |
+| `work/` (gitignored) | `Wiicompiled`: the fork, branch `athena-web-ntsc`; builds, staged sites, release directories |
 | `upstream/` (gitignored) | Read-only clones of the repositories studied, pinned by `scripts/clone-upstream.sh` |
 | `game/` (gitignored) | Your disc image and extraction scratch |
 
-The two working repositories are their own git repositories, backed up privately:
-`work/Wiicompiled` is [mukulpatnaik/mkwii-webgpu-wiicompiled](https://github.com/mukulpatnaik/mkwii-webgpu-wiicompiled)
-(branch `athena-web-ntsc`; `minithena-web` keeps the upstream web branch) and `work/mariokartwebtest`
-is [mukulpatnaik/mkwii-webgpu-webtest](https://github.com/mukulpatnaik/mkwii-webgpu-webtest).
-Minithena's original `mariokartwebtest` repository disappeared from GitHub on or before 2026-10-28;
-their WiiCompiled fork (`Minithena/Wiicompiled`, branch `web`) is still up.
+The fork is its own git repository:
+[mukulpatnaik/mkwii-webgpu-wiicompiled](https://github.com/mukulpatnaik/mkwii-webgpu-wiicompiled)
+(branch `athena-web-ntsc`; `minithena-web` keeps Minithena's web branch as it was). Minithena's
+separate page tooling (`Minithena/mariokartwebtest`: staging, a Cloudflare Worker, a room relay)
+disappeared from GitHub on or before 2026-10-28 and carried no licence, so nothing of it is in
+this repository; the pieces this project needs were written again under `tools/hosting/`.
+Their WiiCompiled fork (`Minithena/Wiicompiled`, branch `web`, GPLv3) is still up.
 
 ## Quick start (Linux)
 
@@ -55,8 +56,6 @@ packages listed there. Everything installs under `~/tools` without sudo (Emscrip
 ```bash
 git clone https://github.com/mukulpatnaik/mkwii-webgpu.git && cd mkwii-webgpu
 git clone -b athena-web-ntsc https://github.com/mukulpatnaik/mkwii-webgpu-wiicompiled.git work/Wiicompiled
-git clone https://github.com/mukulpatnaik/mkwii-webgpu-webtest.git work/mariokartwebtest
-ln -sfn ../Wiicompiled work/mariokartwebtest/wiicompiled
 scripts/doctor.sh                       # what is missing, and where the private data stands
 ```
 
@@ -69,10 +68,10 @@ scripts/build-web-server.sh                                  # work/dist/mkw-web
 work/dist/mkw-web-linux-x86_64 /path/to/your/RMCE01.wbfs     # serves 127.0.0.1:8010 and opens Chrome
 ```
 
-Or serve the staged folder with the tooling's server and pick the disc in the page:
-`python3 work/mariokartwebtest/tools/serve.py work/mariokartwebtest/site/public` then
-`http://127.0.0.1:8000/WiiCompiled.html`. The built-in browser pane has no WebGPU; tests drive the
-installed Chrome on the X display (`tools/browser-test/README.md`).
+Or serve the staged folder (`tools/hosting/serve.py work/sites/main/public`, then
+`http://127.0.0.1:8000/WiiCompiled.html`): it streams the extracted disc, or the disc you pick in
+the page with `?disc=local`. The built-in browser pane has no WebGPU; tests drive the installed
+Chrome on the X display (`tools/browser-test/README.md`).
 
 Hosting for friends who own the game: [docs/hosting.md](docs/hosting.md). Controls:
 [docs/controls.md](docs/controls.md). Native build and parity: [docs/parity-ntsc-u.md](docs/parity-ntsc-u.md).
@@ -85,7 +84,24 @@ wasm (`MKW_BUILD_PRODUCTS=OFF`) and the Node tests. Neither needs game data. The
 regression (boot, Grand Prix drive, saves, pads, parity) only runs on a machine with the disc:
 see the release checklist.
 
+## Legal
+
+This repository holds tooling, scripts and documentation, and nothing from the game: no disc
+images, no extracted files, no translated code, no builds. The browser build can only be made
+from a disc you own, on your own machine (`scripts/build-private-bundle.sh`), and the result
+contains the game's code in translated form. So:
+
+- No builds are published here or anywhere else, and none will be. There are no GitHub Releases.
+- A build you make is for you and for people who own the game, behind a login
+  ([docs/hosting.md](docs/hosting.md)). Never put it on a public address.
+- Players always supply their own disc image; the page reads it in their browser and uploads
+  nothing.
+
+Mario Kart Wii is Nintendo's. This project is not affiliated with or endorsed by Nintendo, and
+nothing here grants any right to the game. See [CONTRIBUTING.md](CONTRIBUTING.md) before
+opening a pull request.
+
 ## Licence
 
-GPLv3 ([LICENSE](LICENSE)), like WiiCompiled. Minithena's room relay in the tooling is AGPL-3.0.
-Nintendo's game, code and assets are not part of this project and are not licensed by it.
+GPLv3 ([LICENSE](LICENSE)), like WiiCompiled. The fork's web branch contains work by Minithena
+(Athena), DarthMDev, Rookie and others under the same licence; see its history.

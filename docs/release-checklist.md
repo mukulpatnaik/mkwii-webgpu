@@ -16,15 +16,14 @@ WiiCompiled.html  WiiCompiled.js  WiiCompiled.wasm  WiiCompiled.data  mkw_disc.w
 Each player opens the page and picks their own disc image (WBFS, ISO or CISO; RVZ/WIA/GCZ are
 refused with a message). The page reads it locally in a worker and never uploads it. Without a
 `game/` folder on the server the page uses the local disc; with a staged `game/` folder
-(`tools/stage-web.sh`) it streams that instead (`?disc=local` / `?disc=fetch` force either).
+(`tools/hosting/stage-game.sh`) it streams that instead (`?disc=local` / `?disc=fetch` force either).
 
 Build and stage a release directory:
 
 ```bash
 scripts/build-private-bundle.sh /path/to/your/RMCx01.wbfs     # or --skip-extract --skip-translate
-mkdir -p work/sites/release/public
-cp work/Wiicompiled/build-web/{WiiCompiled.html,WiiCompiled.js,WiiCompiled.wasm,WiiCompiled.data,mkw_disc.wasm,mkw_disc_worker.js} work/sites/release/public/
-python3 work/mariokartwebtest/tools/serve.py work/sites/release/public --port 8010   # local check
+tools/hosting/stage-release.sh                                 # work/sites/release/public, SHA256SUMS
+tools/hosting/serve.py work/sites/release/public --port 8010   # local check
 ```
 
 The host must send `Cross-Origin-Opener-Policy: same-origin`,
@@ -88,7 +87,8 @@ behind Cloudflare Access.
 
 See [hosting.md](hosting.md): Tailscale in front of nginx or `mkw-web` for a few friends, Caddy or
 nginx with HTTPS and a password on a reachable machine, or Cloudflare Worker + R2 + Access. All
-scripted under `tools/hosting/`; nginx and the Worker (local emulation) were tested with real
-Chrome runs on 2026-10-28, Tailscale, Caddy and a real Cloudflare deploy were not. Each friend
-must own the game and pick their own disc image; the owner shares only the page URL and the
-access credential, never the `.wasm` file or any game data.
+scripted under `tools/hosting/` (our own Worker, uploader, local server and game-folder staging);
+nginx and the Worker were tested with real Chrome runs, and a real Cloudflare deploy behind
+Access went live on 2026-10-29; Tailscale and Caddy were not tested. Each friend must own the
+game and pick their own disc image; the owner shares only the page URL and adds their e-mail to
+the Access policy, never the `.wasm` file or any game data.

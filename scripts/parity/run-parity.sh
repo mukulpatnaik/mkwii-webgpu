@@ -44,7 +44,7 @@ if [ "$web" = 1 ]; then
   echo "== web run (waits for the display lock)"
   server=""
   if ! curl -fsI "http://127.0.0.1:$PORT/WiiCompiled.html" >/dev/null 2>&1; then
-    python3 "$ROOT/work/mariokartwebtest/tools/serve.py" "$SITE_DIR" --port "$PORT" > "$out/serve.log" 2>&1 &
+    python3 "$ROOT/tools/hosting/serve.py" "$SITE_DIR" --port "$PORT" > "$out/serve.log" 2>&1 &
     server=$!
     sleep 2
   fi

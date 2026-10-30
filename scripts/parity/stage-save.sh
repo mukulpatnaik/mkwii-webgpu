@@ -1,9 +1,7 @@
 #!/usr/bin/env bash
-# Stage a native save (rksys.dat: licences and ghosts) into a track's web site, the way
-# work/mariokartwebtest/tools/stage-web.sh does for the macOS PAL build: copied to
-# $SITE_DIR/game/save/rksys.dat with everything unlocked (tools/unlock-all.py), and listed in the
-# game manifests so the page can read it. The page seeds its NAND from it on first start, or again
-# with ?resetsave.
+# Stage a native save (rksys.dat: licences and ghosts) into a track's web site: copied to
+# $SITE_DIR/game/save/rksys.dat and listed in the game manifests so the page can read it. The
+# page seeds its NAND from it on first start, or again with ?resetsave.
 #
 #   eval "$(scripts/new-track.sh e)"
 #   scripts/parity/stage-save.sh [path/to/rksys.dat]
@@ -14,16 +12,13 @@
 #                                                 four levels above, the executable)
 #   2. ${XDG_DATA_HOME:-~/.local/share}/WiiCompiled/NAND/...   the default on Linux
 #
-# stage-web.sh only knows the macOS path of a PAL save and must not be edited here, so it is run
-# with a throwaway HOME in which the chosen save sits at that path; everything else it does (copy
-# the build, link the disc, unlock, write the manifests) is unchanged. The web build seeds the save
-# into its own region's title directory (web_platform.cpp), whatever path it was staged from.
-# The staged files are game-derived and gitignored: never commit them.
+# The save is copied as it is (the native file is not touched); the game folder is restaged by
+# tools/hosting/stage-game.sh. The web build seeds the save into its own region's title directory
+# (web_platform.cpp). The staged files are game-derived and gitignored: never commit them.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 : "${FORK:?run eval \"\$(scripts/new-track.sh <track>)\" first}"
-: "${SITE_DIR:?}" "${BUILD_DIR:?}"
-PORT="${PORT:-8000}"
+: "${SITE_DIR:?}"
 NATIVE_BUILD="${NATIVE_BUILD:-$FORK/build-native}"
 
 boot="$FORK/Assets/DATA/sys/boot.bin"
@@ -45,18 +40,12 @@ fi
 [ "$(head -c 4 "$save")" = RKSD ] || { echo "$save is not an rksys.dat save" >&2; exit 1; }
 echo "disc $game_id; native save: $save"
 
-fakehome="$(mktemp -d)"
-trap 'rm -rf "$fakehome"' EXIT
-mac_pal_save="$fakehome/Library/Application Support/WiiCompiled/NAND/title/00010004/524d4350/data"
-mkdir -p "$mac_pal_save"
-cp "$save" "$mac_pal_save/rksys.dat"
-HOME="$fakehome" FORK="$FORK" BUILD_DIR="$BUILD_DIR" SITE_DIR="$SITE_DIR" PORT="$PORT" \
-  "$ROOT/work/mariokartwebtest/tools/stage-web.sh"
+"$ROOT/tools/hosting/stage-game.sh" --fork "$FORK" --save "$save" "$SITE_DIR/game"
 
 staged="$SITE_DIR/game/save/rksys.dat"
-[ -f "$staged" ] || { echo "stage-web.sh did not stage the save" >&2; exit 1; }
+[ -f "$staged" ] || { echo "stage-game.sh did not stage the save" >&2; exit 1; }
 grep -q '^f [0-9]* save/rksys.dat$' "$SITE_DIR/game/manifest-v2.txt" || {
   echo "the save is missing from $SITE_DIR/game/manifest-v2.txt" >&2; exit 1; }
-echo "staged $staged (unlocked copy; the native save is untouched)"
+echo "staged $staged (a copy; the native save is untouched)"
 echo "ghosts in the staged save:"
 python3 "$ROOT/scripts/parity/rkg-info.py" "$staged"

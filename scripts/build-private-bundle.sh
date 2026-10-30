@@ -1,36 +1,34 @@
 #!/usr/bin/env bash
 # Build the private browser bundle of Mario Kart Wii from YOUR OWN clean retail dump (PAL RMCP01,
 # or NTSC-U/J/K through the region-support branch merged into work/Wiicompiled),
-# on Linux, using Minithena's `web` branch of WiiCompiled (work/Wiicompiled, branch athena-web-ntsc)
-# and Minithena's page tooling (work/mariokartwebtest, with `wiicompiled` symlinked to our fork).
+# on Linux, from the web branch of WiiCompiled (work/Wiicompiled, branch athena-web-ntsc).
 #
 # Everything this script produces is derived from the game and lives in gitignored paths
 # (work/Wiicompiled/Assets, work/Wiicompiled/generated, work/Wiicompiled/build-web,
-# work/mariokartwebtest/site). Never commit, upload or share any of it.
+# work/sites). Never commit, upload or share any of it.
 #
 # Usage:
 #   scripts/build-private-bundle.sh /path/to/RMCP01.{iso,wbfs,rvz,gcm,ciso,gcz}
 #   scripts/build-private-bundle.sh --skip-extract      # reuse Assets/DATA from an earlier run
 #   scripts/build-private-bundle.sh --skip-translate    # reuse generated/ (runtime-only changes)
 # Then:
-#   cd work/mariokartwebtest && python3 tools/serve.py site/public
+#   tools/hosting/serve.py work/sites/main/public
 #   open http://127.0.0.1:8000/WiiCompiled.html?muted   (Chrome/Edge 137+ with WebGPU)
 #
 # Environment (defaults build the main checkout; scripts/new-track.sh prints the values for a
 # track worktree so several builds can run side by side):
 #   FORK       WiiCompiled checkout to build      (default: work/Wiicompiled)
 #   BUILD_DIR  Emscripten build directory         (default: $FORK/build-web)
-#   SITE_DIR   staged folder to serve             (default: work/mariokartwebtest/site/public)
+#   SITE_DIR   staged folder to serve             (default: work/sites/main/public)
 #   PORT       port printed in the serve hint     (default: 8000)
 #   JOBS       build/translate parallelism        (default: nproc)
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 FORK="$(cd "${FORK:-$ROOT/work/Wiicompiled}" && pwd)"
-TOOLING="$ROOT/work/mariokartwebtest"
 BUILD_DIR="${BUILD_DIR:-$FORK/build-web}"
 case "$BUILD_DIR" in /*) ;; *) BUILD_DIR="$PWD/$BUILD_DIR" ;; esac
-SITE_DIR="${SITE_DIR:-$TOOLING/site/public}"
+SITE_DIR="${SITE_DIR:-$ROOT/work/sites/main/public}"
 case "$SITE_DIR" in /*) ;; *) SITE_DIR="$PWD/$SITE_DIR" ;; esac
 PORT="${PORT:-8000}"
 EMSDK="${EMSDK:-$HOME/tools/emsdk}"
@@ -122,8 +120,10 @@ emcmake cmake -S runtime -B "$BUILD_DIR" -G Ninja -DCMAKE_MAKE_PROGRAM="$(comman
 cmake --build "$BUILD_DIR" --target WiiCompiled --parallel "$JOBS"
 ls -la "$BUILD_DIR"/WiiCompiled.{wasm,js,html,data} 2>/dev/null || true
 
-# 4. Stage for the local page (Minithena's tooling; symlinks the extracted disc, writes manifests).
-FORK="$FORK" BUILD_DIR="$BUILD_DIR" SITE_DIR="$SITE_DIR" PORT="$PORT" "$TOOLING/tools/stage-web.sh"
+# 4. Stage for the local page: the page files, and the extracted disc as a game folder in place
+# (fetch mode; the page also accepts a picked disc image with ?disc=local).
+BUILD_DIR="$BUILD_DIR" "$ROOT/tools/hosting/stage-release.sh" "$SITE_DIR"
+"$ROOT/tools/hosting/stage-game.sh" --fork "$FORK" "$SITE_DIR/game"
 echo
-echo "Staged. Serve with:  python3 $TOOLING/tools/serve.py $SITE_DIR --port $PORT"
+echo "Staged. Serve with:  $ROOT/tools/hosting/serve.py $SITE_DIR --port $PORT"
 echo "Then open http://127.0.0.1:$PORT/WiiCompiled.html?muted in Chrome/Edge 137+."

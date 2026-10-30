@@ -16,7 +16,7 @@ Never commit or upload them.
 | Native build | `work/Wiicompiled/build-native` (configure line below) |
 | Bounded native run with scripted input and window grabs | `scripts/parity/native-run.sh` |
 | Native menu routes (`at <sec> <verb>` lines) | `scripts/parity/native-race-staff-ghost.steps`, `native-watch-staff-replay.steps` |
-| Stage the native save into a web site (unlocked, in the manifests) | `scripts/parity/stage-save.sh` |
+| Stage the native save into a web site (copied as it is, listed in the manifests) | `scripts/parity/stage-save.sh` |
 | Scripted Chrome driver (waits on console lines, screencast bursts) | `tools/browser-test/parity-drive.js` |
 | Web menu route | `scripts/parity/web-race-staff-ghost.steps` |
 | Ghost header reader (finish time, lap splits, course) | `scripts/parity/rkg-info.py` |
