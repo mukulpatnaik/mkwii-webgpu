@@ -1,0 +1,16 @@
+# Demo capture "boot" (tools/video/capture.sh boot): the page loads, Start is pressed by the driver
+# as soon as it is enabled, the controls panel is hidden so the game fills the window, the shaders
+# compile, the opening notices pass, and the title screen stays (nothing is pressed) until the
+# game drops into its attract demo. Marks (page, start, end) go to console.log and perf.json; the
+# video cuts to the title by the game's own console line for it (video/scripts/perf-to-json.mjs).
+mark page
+waitstart 90000
+mark start
+wait 2500
+eval document.getElementById('hide-controls').click()
+wait 10000
+wait 10000
+wait 10000
+wait 10000
+mark end
+wait 500

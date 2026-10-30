@@ -1,0 +1,25 @@
+{
+  "name": "mkwii-webgpu-demo-video",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Demo video of Mario Kart Wii running in Chrome, assembled with Remotion from local captures (never committed)",
+  "license": "GPL-3.0-or-later",
+  "scripts": {
+    "studio": "remotion studio",
+    "render": "remotion render Main out/demo.mp4",
+    "perf": "node scripts/perf-to-json.mjs"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.539",
+    "@remotion/google-fonts": "4.0.539",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "remotion": "4.0.539"
+  },
+  "devDependencies": {
+    "@types/node": "26.6.6",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "typescript": "7.0.2"
+  }
+}

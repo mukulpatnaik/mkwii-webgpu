@@ -1,0 +1,65 @@
+# Demo capture "race" (tools/video/capture.sh race): the same start as demo-boot, then the menu route
+# of gp-50cc.cmds (fresh profile -> new licence -> Single Player -> Grand Prix -> 50cc -> Mario,
+# Standard Kart M, automatic -> Mushroom Cup -> Luigi Circuit) and a race driven with the keyboard
+# and mouse: left click held is accelerate, A/D steer. The driver is a script, not a player: it
+# follows a fixed timeline, so a few bumps are expected after the first corner. Marks: page, start, title, main-menu,
+# race-ok (the OK that loads the race), go (the countdown's GO, when accelerate is pressed).
+mark page
+waitstart 90000
+mark start
+wait 2500
+eval document.getElementById('hide-controls').click()
+wait 17000
+# opening -> title -> Select License -> new licence -> Choose a Mii -> confirm -> ready -> guest note
+click 500 430
+wait 400
+mark title
+wait 2500
+click 500 430
+wait 3000
+click 500 430
+wait 2500
+click 500 430
+wait 3000
+click 500 430
+wait 2500
+click 500 430
+wait 4000
+click 500 430
+wait 4000
+click 500 430
+wait 4000
+mark main-menu
+# Single Player -> Grand Prix -> 50cc -> Mario -> kart -> automatic drift -> Mushroom Cup -> OK
+click 500 430
+wait 3000
+click 500 430
+wait 3000
+click 500 430
+wait 4000
+click 500 430
+wait 3500
+click 500 430
+wait 3500
+click 500 430
+wait 3500
+click 500 430
+wait 3000
+mark race-ok
+click 500 430
+# Course flyover, then the countdown; "3" came 15.5 to 18 s after the OK on two captures, so the
+# flyover's length varies by about two seconds. Holding A from "3" burns the kart out, so
+# accelerate is pressed at +20.3 s: the "1" or the GO, whichever it is this time. `go` marks the
+# press and the video cuts in a few seconds before it.
+wait 20300
+mark go
+mousedown 500 430
+# The first corner is a left-hander about 8 s after the start: steer through it, then straight on.
+wait 8300
+keydown a
+wait 2400
+keyup a
+wait 136000
+mouseup
+mark end
+wait 500

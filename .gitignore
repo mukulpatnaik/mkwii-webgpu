@@ -20,3 +20,7 @@
 # Working fork of WiiCompiled (own git repo; see docs/plan.md)
 /work/
 __pycache__/
+# Demo video (video/README.md): captures and renders show the game; node_modules is installed.
+/video/public/captures/
+/video/out/
+/video/node_modules/
