@@ -22,7 +22,8 @@
 // healthy.log (the lines that show the relay path worked). Exit code 0 when both clients reached a
 // running race, 1 otherwise. Player-to-player packet rates are in the relay's own log
 // (dev-local.sh --trace). MKW_LICENCE=0 skips the profile setup when the site's staged game folder
-// seeds a save (game/save/rksys.dat).
+// seeds a save (game/save/rksys.dat). MKW_BOT=1 drives both karts with kart-bot.js (a steering bot
+// on a fake pad) instead of the fixed keyboard drive (hold accelerate, tap left and right).
 //
 // For the demo video (tools/video/capture.sh multiplayer): MKW_WINDOW_A and MKW_WINDOW_B
 // ("WxH+X+Y") put the two clients in X11 windows of that size and place on one display, with no
@@ -34,6 +35,8 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const portal = require('./portal'); // MKW_CHROME, MKW_PORTAL, CHROME_ARGS: another Chromium, e.g. the Portal dev build
+const guestMemory = require('./guest-memory');
+const kartBot = require('./kart-bot');
 
 const [url, outdir] = process.argv.slice(2);
 if (!url || !outdir) {
@@ -48,6 +51,7 @@ const say = (s) => { const line = `[${stamp()}] ${s}`; dlog.write(line + '\n'); 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const raceSeconds = Number(process.env.MKW_RACE_SECONDS || 30);
 const createLicence = process.env.MKW_LICENCE !== '0';
+const bot = process.env.MKW_BOT === '1';
 const displays = { a: process.env.MKW_DISPLAY_A || process.env.DISPLAY, b: process.env.MKW_DISPLAY_B || process.env.DISPLAY };
 const windows = { a: process.env.MKW_WINDOW_A, b: process.env.MKW_WINDOW_B };
 const windowed = !!(windows.a && windows.b);
@@ -90,6 +94,8 @@ class Client {
       viewport: windowed ? null : { width: 1280, height: 860 },
       env: portal.launchEnv({ DISPLAY: displays[this.label] }),
     });
+    await this.context.addInitScript(guestMemory);
+    await this.context.addInitScript(kartBot);
     await portal.releaseOnboarding((s) => say(`${this.label}: ${s}`));
     await portal.themeSpace(this.context, process.env[`MKW_SPACE_THEME_${this.label.toUpperCase()}`], (s) => say(`${this.label}: ${s}`));
     this.page = portal.isPortal() ? await portal.visiblePage(this.context, (s) => say(`${this.label}: ${s}`))
@@ -242,6 +248,7 @@ let ok = false;
       handedOff(c, 180000),
     ]);
     say(`${c.label}: ${result}`);
+    if (bot) say(`${c.label}: bot ${await c.page.evaluate(() => window.__mkwBot.start())}`);
     say(`${c.label}: roster ${JSON.stringify(await c.roster())}`);
     await c.shot('character-select');
   }));
@@ -274,16 +281,18 @@ let ok = false;
   mark('race-loaded');
   await sleep(12000);
   mark('go');
-  for (const c of [a, b]) { await c.page.mouse.move(500, 430); await c.page.mouse.down(); }
+  if (!bot) for (const c of [a, b]) { await c.page.mouse.move(500, 430); await c.page.mouse.down(); }
   const raceEnd = Date.now() + raceSeconds * 1000;
   for (let n = 0; Date.now() < raceEnd; n++) {
-    for (const c of [a, b]) {
-      await c.page.keyboard.down(n % 2 ? 'a' : 'd');
-      await sleep(250);
-      await c.page.keyboard.up(n % 2 ? 'a' : 'd');
+    if (!bot) {
+      for (const c of [a, b]) {
+        await c.page.keyboard.down(n % 2 ? 'a' : 'd');
+        await sleep(250);
+        await c.page.keyboard.up(n % 2 ? 'a' : 'd');
+      }
     }
     if (n === 4) for (const c of [a, b]) await c.shot('race-early');
-    await sleep(1500);
+    await sleep(bot ? 2000 : 1500);
   }
   for (const c of [a, b]) {
     await c.shot('race');

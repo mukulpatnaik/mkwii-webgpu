@@ -17,8 +17,10 @@ const segment = (load: () => Promise<Capture | null>, length: (c: Capture | null
   },
 });
 
-// The gameplay segment: the Time Trial on the staff ghost's inputs, else the scripted Grand Prix drive.
-const loadGameplay = async () => (await loadCapture('timetrial')) ?? loadCapture('race');
+// The gameplay segment: the Grand Prix driven by the bot, else the Time Trial on the
+// staff ghost's inputs, else the scripted Grand Prix drive.
+const loadGameplay = async () =>
+  (await loadCapture('gp')) ?? (await loadCapture('timetrial')) ?? loadCapture('race');
 
 export const Root: React.FC = () => (
   <>

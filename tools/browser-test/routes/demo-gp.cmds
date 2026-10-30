@@ -1,0 +1,54 @@
+# Demo capture "gp" (tools/video/capture.sh gp): the same start as demo-boot (Start, the controls
+# panel hidden, the opening), then title -> licence 1 -> Single Player -> Grand Prix -> 50cc ->
+# Mario, Standard Kart M, automatic drift -> Mushroom Cup -> Start Race: OK, with the driving bot
+# started (kart-bot.js): the first race (Luigi Circuit, 12 karts, items) driven by the bot through a
+# fake gamepad, with the player's own camera and HUD. Marks: page, start, title, main-menu, ok (the
+# press that loads the race); the capture's perf.json adds race-loaded from the game's own log.
+#
+# Needs a licence in slot 1: the site's game folder seeds a save (tools/hosting/stage-game.sh
+# --save rksys.dat; one exported from any run with the page's Export save button will do).
+#
+# Left click is A, and every press counts (see demo-timetrial.cmds): the route anchors on the
+# game's title-scene line and leaves each menu time to slide in.
+mark page
+waitstart 90000
+mark start
+wait 2500
+eval document.getElementById('hide-controls').click()
+waitlog 120 RVL_SDK - THP
+mark title
+wait 3000
+# title -> Select License (licence 1 under the cursor) -> main menu
+click 500 430
+wait 3000
+click 500 430
+wait 4500
+mark main-menu
+# Single Player -> Grand Prix (under the cursor) -> Engine Classes (50cc under the cursor)
+click 500 430
+wait 8000
+click 500 430
+wait 4500
+shot engine-class
+# 50cc -> Mario -> Standard Kart M -> automatic -> Mushroom Cup -> Start Race screen
+click 500 430
+wait 4500
+click 500 430
+wait 4500
+click 500 430
+wait 4500
+click 500 430
+wait 4500
+click 500 430
+wait 4500
+shot start-race
+eval window.__mkwBot.start()
+mark ok
+click 500 430
+waitlog 30 \[bot\] route
+# the race: the course flyover and countdown (about 20 s), then the first two laps or so
+wait 30000
+wait 30000
+wait 20000
+mark end
+wait 500

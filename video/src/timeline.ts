@@ -23,14 +23,20 @@ export const bootClips = (c: Capture): ClipWindow[] => {
   return [{...clamp(c, title, 3), caption: `The title screen, in a ${browserName(c)} tab.`}];
 };
 
-// Gameplay: the countdown and the first corners of a race. From the "timetrial" capture (a Time
-// Trial on Luigi Circuit whose player kart is driven by the disc's staff ghost's recorded inputs),
-// or the scripted 50cc Grand Prix drive ("race") when there is none. The Time Trial has no driver
-// mark for GO: GO shows about TIMETRIAL_GO seconds after the course is loaded (the game's
-// `[web-warm] course file` line, `race-loaded`).
+// Gameplay: the countdown and the first corners of a race. From the "gp" capture (a 50cc Grand
+// Prix race on Luigi Circuit whose player kart is driven by kart-bot.js on a fake gamepad), else the
+// "timetrial" capture (a Time Trial whose player kart is driven by the disc's staff ghost's
+// recorded inputs), else the scripted 50cc Grand Prix drive ("race"). The first two have no driver
+// mark for GO: GO shows a fixed time after the course is loaded (the game's `[web-warm] course
+// file` line, `race-loaded`), after the flyover in a Grand Prix.
 export const GAMEPLAY_SECONDS = 8;
+const GP_GO = 21.7;
 const TIMETRIAL_GO = 8.5;
 export const gameplayClip = (c: Capture): ClipWindow => {
+  if (c.name === 'gp') {
+    const go = (markerTime(c, 'race-loaded') ?? markerTime(c, 'ok') ?? 0) + GP_GO;
+    return {...clamp(c, go - 1.5, GAMEPLAY_SECONDS), caption: 'Grand Prix, 12 karts. A small bot is at the controller.'};
+  }
   if (c.name === 'timetrial') {
     const go = (markerTime(c, 'race-loaded') ?? markerTime(c, 'ok') ?? 0) + TIMETRIAL_GO;
     return {...clamp(c, go - 2, GAMEPLAY_SECONDS), caption: "Time Trial, Luigi Circuit, on the staff ghost's recorded inputs."};

@@ -34,9 +34,11 @@ online and race together; see its header. Needs a site with a staged game folder
 `wait <ms>`, `shot <name>`, `eval <js>`, `quit`. Left click is A. The title drops into the attract
 demo after a few seconds: click once to cancel it, then again on the settled title.
 `pace-drive.js <url> <outdir>`: drive.js plus marks, holds, `waitlog`, saved routes (`routes/`)
-and window.__mkwGuest in the page (`guest-memory.js`): the game's MEM1 and MEM2 for `eval` lines,
+and window.__mkwGuest in the page (`guest-memory.js`): the game's MEM1 and MEM2 for `eval` lines
 and `autodrive('ghost')`, which puts a Time Trial ghost's recorded inputs on the player's own kart
-(`routes/demo-timetrial.cmds`; the run reproduces the ghost's time to the millisecond).
+(`routes/demo-timetrial.cmds`; the run reproduces the ghost's time to the millisecond); and
+window.__mkwBot (`kart-bot.js`), a bot that drives the local player's kart along the course's CPU
+route through a fake gamepad (`routes/demo-gp.cmds`; room-test.js `MKW_BOT=1`).
 
 Healthy signals in `console.log`: `[web-perf] fps=60.0`, `[web-pace] race steps/s=60.0` in a race,
 `[web-warm] 12 players ...` before a race loads. `out/` is gitignored (screenshots show the game).

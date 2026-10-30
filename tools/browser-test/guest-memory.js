@@ -94,6 +94,8 @@ module.exports = String.raw`(() => {
     throw new Error('not in MEM1 or MEM2: 0x' + addr.toString(16));
   };
   const r32 = (addr) => be32(view(), at(addr));
+  const f32buf = new DataView(new ArrayBuffer(4));
+  const rf32 = (addr) => { f32buf.setUint32(0, r32(addr)); return f32buf.getFloat32(0); };
   const w32 = (addr, v) => { const h = view(), o = at(addr); h[o] = v >>> 24; h[o + 1] = v >>> 16; h[o + 2] = v >>> 8; h[o + 3] = v; };
 
   const player = (rd, scen, i) => rd + SCEN[scen] + 0x8 + i * 0xF0;
@@ -120,5 +122,5 @@ module.exports = String.raw`(() => {
     }, 5);
     return 'armed';
   };
-  window.__mkwGuest = {r32, w32, scenario, autodrive};
+  window.__mkwGuest = {r32, rf32, w32, scenario, autodrive};
 })();`;
