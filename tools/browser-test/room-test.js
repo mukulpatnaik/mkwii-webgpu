@@ -33,6 +33,7 @@ const { chromium } = require('playwright-core');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
+const portal = require('./portal'); // MKW_CHROME, MKW_PORTAL, CHROME_ARGS: another Chromium, e.g. the Portal dev build
 
 const [url, outdir] = process.argv.slice(2);
 if (!url || !outdir) {
@@ -51,7 +52,8 @@ const displays = { a: process.env.MKW_DISPLAY_A || process.env.DISPLAY, b: proce
 const windows = { a: process.env.MKW_WINDOW_A, b: process.env.MKW_WINDOW_B };
 const windowed = !!(windows.a && windows.b);
 const chromeArgs = ['--enable-unsafe-webgpu', '--enable-features=Vulkan,WebAssemblyExperimentalJSPI', '--ignore-gpu-blocklist',
-  '--autoplay-policy=no-user-gesture-required', '--window-size=1280,900'];
+  '--autoplay-policy=no-user-gesture-required', '--window-size=1280,900',
+  ...(process.env.CHROME_ARGS || '').split(/\s+/).filter(Boolean)];
 const windowArgs = (spec) => {
   const m = /^(\d+)x(\d+)\+(\d+)\+(\d+)$/.exec(spec || '');
   if (!m) return [];
@@ -78,14 +80,20 @@ class Client {
 
   async launch() {
     this.profileDir = fs.mkdtempSync(path.join(os.tmpdir(), `mkw-room-${this.label}-`));
+    // Two Portal instances need two debugging ports (portal.js: MKW_PORTAL_PORT_OFFSET).
+    process.env.MKW_PORTAL_PORT_OFFSET = this.label === 'a' ? '0' : '1';
     this.context = await chromium.launchPersistentContext(this.profileDir, {
-      executablePath: '/usr/bin/google-chrome', headless: false, args: [...chromeArgs, ...windowArgs(windows[this.label])],
+      executablePath: portal.executable(), headless: false,
+      args: [...chromeArgs, ...portal.portalArgs(), ...windowArgs(windows[this.label])],
       ignoreDefaultArgs: ['--disable-gpu', '--mute-audio', ...(windowed ? ['--enable-automation'] : [])],
       chromiumSandbox: windowed, // Chrome's own sandbox stays on: no "--no-sandbox" warning bar in the recording
       viewport: windowed ? null : { width: 1280, height: 860 },
-      env: { ...process.env, DISPLAY: displays[this.label] },
+      env: portal.launchEnv({ DISPLAY: displays[this.label] }),
     });
-    this.page = this.context.pages()[0] || await this.context.newPage();
+    await portal.releaseOnboarding((s) => say(`${this.label}: ${s}`));
+    await portal.themeSpace(this.context, process.env[`MKW_SPACE_THEME_${this.label.toUpperCase()}`], (s) => say(`${this.label}: ${s}`));
+    this.page = portal.isPortal() ? await portal.visiblePage(this.context, (s) => say(`${this.label}: ${s}`))
+      : this.context.pages()[0] || await this.context.newPage();
     const log = fs.createWriteStream(path.join(outdir, `console-${this.label}.log`), { flags: 'a' });
     log.write(`[${stamp()}] [driver] t0 epoch_ms=${t0}\n`);
     consoleLogs.push(log);

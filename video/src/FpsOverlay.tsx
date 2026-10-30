@@ -22,19 +22,19 @@ export const FpsOverlay: React.FC<{perf: Perf; clipStartSec: number; compact?: b
         left: compact ? 24 : 48,
         bottom: compact ? 24 : 40,
         fontFamily: theme.fontFamily,
-        color: theme.fg,
-        backgroundColor: 'rgba(11, 12, 16, 0.78)',
+        color: theme.overlayText,
+        backgroundColor: theme.overlayBg,
         padding: compact ? '8px 14px' : '14px 22px',
-        borderRadius: 8,
+        borderRadius: 999,
         display: 'flex',
         alignItems: 'baseline',
         gap: 14,
       }}
     >
-      <span style={{fontSize: compact ? 34 : 56, fontWeight: 600, fontVariantNumeric: 'tabular-nums', minWidth: compact ? 66 : 110}}>
+      <span style={{fontSize: compact ? 34 : 56, fontWeight: 900, fontVariantNumeric: 'tabular-nums', minWidth: compact ? 66 : 110}}>
         {sample ? sample.fps.toFixed(1) : '—'}
       </span>
-      <span style={{fontSize: compact ? 20 : 28, fontWeight: 400, color: theme.muted}}>
+      <span style={{fontSize: compact ? 20 : 28, fontWeight: 700, color: theme.overlayMuted}}>
         {compact ? 'fps, measured by the page' : 'fps, measured by the page (3 s average)'}
       </span>
     </div>

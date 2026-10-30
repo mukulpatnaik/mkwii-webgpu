@@ -31,11 +31,11 @@ const EventLine: React.FC<{capture: Capture; clipStartSec: number}> = ({capture,
         top: 24,
         fontFamily: theme.fontFamily,
         fontSize: 22,
-        fontWeight: 400,
-        color: theme.muted,
-        backgroundColor: 'rgba(11, 12, 16, 0.78)',
+        fontWeight: 700,
+        color: theme.overlayMuted,
+        backgroundColor: theme.overlayBg,
         padding: '8px 14px',
-        borderRadius: 6,
+        borderRadius: 999,
         whiteSpace: 'nowrap',
         overflow: 'hidden',
         textOverflow: 'ellipsis',
@@ -52,7 +52,7 @@ const Pair: React.FC<{a: Capture; b: Capture; window: ClipWindow}> = ({a, b, win
   const length = frames(window.length);
   return (
     <Fade durationInFrames={length}>
-      <AbsoluteFill style={{backgroundColor: theme.bg, flexDirection: 'row'}}>
+      <AbsoluteFill style={{backgroundColor: theme.letterbox, flexDirection: 'row'}}>
         {[a, b].map((c) => (
           <div key={c.name} style={{position: 'relative', width: '50%', height: '100%'}}>
             <OffthreadVideo

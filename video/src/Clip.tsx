@@ -11,7 +11,7 @@ export const Clip: React.FC<{capture: Capture; window: ClipWindow; fps?: boolean
   const length = frames(window.length);
   return (
     <Fade durationInFrames={length}>
-      <AbsoluteFill style={{backgroundColor: theme.bg}}>
+      <AbsoluteFill style={{backgroundColor: theme.letterbox}}>
         <OffthreadVideo
           src={capture.src}
           trimBefore={frames(window.from)}

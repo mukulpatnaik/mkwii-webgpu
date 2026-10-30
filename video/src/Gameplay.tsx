@@ -8,8 +8,9 @@ import {CARD_SECONDS, frames, gameplayClip} from './timeline';
 export const gameplayFrames = (c: Capture | null) =>
   c ? frames(gameplayClip(c).length) : frames(CARD_SECONDS.placeholder);
 
-// The countdown and the first stretch of a Grand Prix race, with the page's own fps readings.
+// The countdown and the first stretch of a race (the staff ghost's replay, or the scripted Grand
+// Prix drive), with the page's own fps readings.
 export const Gameplay: React.FC<SegmentProps> = ({capture}) => {
-  if (!capture) return <PlaceholderCard durationInFrames={frames(CARD_SECONDS.placeholder)} title="Gameplay" capture="race" />;
+  if (!capture) return <PlaceholderCard durationInFrames={frames(CARD_SECONDS.placeholder)} title="Gameplay" capture="replay" />;
   return <Clip capture={capture} window={gameplayClip(capture)} fps />;
 };

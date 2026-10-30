@@ -10,9 +10,9 @@ export type SegmentProps = {capture: Capture | null};
 export const bootFrames = (c: Capture | null) =>
   c ? bootClips(c).reduce((n, w) => n + frames(w.length), 0) : frames(CARD_SECONDS.placeholder);
 
-// The page loads in a Chrome tab, Start is pressed, then the title screen.
+// The intro: the title screen and the opening movie, from the boot capture.
 export const Boot: React.FC<SegmentProps> = ({capture}) => {
-  if (!capture) return <PlaceholderCard durationInFrames={frames(CARD_SECONDS.placeholder)} title="Boot" capture="boot" />;
+  if (!capture) return <PlaceholderCard durationInFrames={frames(CARD_SECONDS.placeholder)} title="Intro" capture="boot" />;
   return (
     <Series>
       {bootClips(capture).map((w, i) => (

@@ -3,6 +3,7 @@
 # Record a scripted Chrome session of the game for the demo video (video/README.md).
 #
 #   tools/video/capture.sh boot            # page load, Start, shader compile, title     (~45 s)
+#   tools/video/capture.sh replay          # the same, then the staff ghost's replay     (~3 min)
 #   tools/video/capture.sh race            # the same, then a 50cc Grand Prix race       (~4 min)
 #   tools/video/capture.sh multiplayer     # two clients in one race through the relay   (~4 min)
 #   tools/video/capture.sh <name> <route.cmds> [max-seconds]
@@ -25,12 +26,39 @@
 # folder), MKW_PORT (8032), MKW_DISC (a disc image for a site without a game folder: the page's
 # picker is given it, read locally), DISPLAY (:0), MKW_WINDOW ("WxH+X+Y", default: the display's
 # work area), MKW_RACE_SECONDS (multiplayer: how long both clients drive, default 30).
+# MKW_BROWSER=portal records the Portal dev build (~/code/browser on ~/code/portal-chromium:
+# PORTAL_BROWSER_REPO and PORTAL_CHROMIUM_ROOT override those paths) with Portal's own chrome
+# instead of Google Chrome; MKW_BROWSER=chrome is the default. tools/browser-test/portal.js says
+# how the drivers handle it.
 set -euo pipefail
 cd "$(dirname "$0")/../.."
+browser="${MKW_BROWSER:-chrome}"
+browser_env=()
+case "$browser" in
+  chrome) ;;
+  portal)
+    repo="${PORTAL_BROWSER_REPO:-$HOME/code/browser}"
+    croot="${PORTAL_CHROMIUM_ROOT:-$HOME/code/portal-chromium}"
+    # The build's portal.mojom must match the chrome bundle, or the window shows "portal.mojom hash
+    # mismatch": in the browser repo, scripts/chromium/export-mojom-bindings.sh then
+    # `node_modules/.bin/vite build --config src/chrome/vite.config.ts`. PORTAL_EXE picks the binary
+    # (default: out/Default, the build scripts/chromium/02-build.sh makes).
+    exe="${PORTAL_EXE:-$croot/chromium/src/out/Default/chrome}"
+    [ -x "$exe" ] || { echo "no Portal dev build under $croot/chromium/src/out (PORTAL_CHROMIUM_ROOT, PORTAL_EXE)" >&2; exit 1; }
+    [ -d "$repo/dist-portal/assets" ] || { echo "no chrome bundle at $repo/dist-portal: build it in $repo (vite build --config src/chrome/vite.config.ts)" >&2; exit 1; }
+    bun_exe="$(command -v bun)" || { echo "bun is needed for Portal's dev sidecar" >&2; exit 1; }
+    # The same switches as $repo/scripts/chromium/03-run.sh, minus its --enable-features (ours
+    # carries Vulkan and JSPI; a second --enable-features would replace it).
+    portal_args="--portal-chrome --portal-chrome-dir=$repo/dist-portal --portal-sidecar-exe=$bun_exe --portal-sidecar-script=$repo/src/sidecar/index.ts --disable-features=HttpsFirstModeV2ForTypicallySecureUsers,TreesInViz"
+    browser_env=(MKW_CHROME="$exe" MKW_PORTAL=1)
+    ;;
+  *) echo "MKW_BROWSER must be chrome or portal" >&2; exit 1 ;;
+esac
 name="${1:?usage: $0 <name> [route.cmds] [max-seconds]}"
 case "$name" in
   boot)        route="${2:-tools/browser-test/routes/demo-boot.cmds}"; max="${3:-120}" ;;
   race)        route="${2:-tools/browser-test/routes/demo-race.cmds}"; max="${3:-330}" ;;
+  replay)      route="${2:-tools/browser-test/routes/demo-replay.cmds}"; max="${3:-260}" ;;
   multiplayer) route=room-test; max="${2:-600}" ;;
   *)           route="${2:?a route file (tools/browser-test/routes/*.cmds) is needed for $name}"; max="${3:-300}" ;;
 esac
@@ -42,6 +70,8 @@ url="http://127.0.0.1:$port/WiiCompiled.html?muted"
 out="video/public/captures/$name"
 [ -d tools/browser-test/node_modules/playwright-core ] || { echo "run: (cd tools/browser-test && npm install)" >&2; exit 1; }
 [ -d "$site" ] || { echo "no staged site at $site (MKW_SITE)" >&2; exit 1; }
+[ "$name" != replay ] || [ -f "$site/game/save/rksys.dat" ] \
+  || echo "warning: the replay route expects a licence in slot 1, but $site/game has no save (tools/hosting/stage-game.sh --save)" >&2
 
 rm -rf "$out"; mkdir -p "$out"
 ffmpeg_pids=()
@@ -82,20 +112,29 @@ encoder=(-c:v libx264 -preset veryfast -crf 18)
 ffmpeg -hide_banner -encoders 2>/dev/null | grep -q h264_nvenc && nvidia-smi >/dev/null 2>&1 \
   && encoder=(-c:v h264_nvenc -preset p4 -tune hq -rc vbr -cq 19 -b:v 0 -maxrate 40M -bufsize 80M)
 
-# Visible Chrome windows at least 600 px wide, as "id x y w h" lines.
+# The browser's windows carry a fixed X11 class (--class), so the recorder finds them whatever
+# the browser and whatever CHROME_DESKTOP a launcher set.
+common_args="--class=mkw-capture --ozone-platform=x11 --hide-crash-restore-bubble --no-default-browser-check ${portal_args:-}"
+# Visible capture windows at least 600 px wide that are normal toplevels and that x11grab can
+# read (Portal has helper windows of the same class), as "id x y w h" lines.
 chrome_windows() {
-  for id in $(xdotool search --onlyvisible --class google-chrome 2>/dev/null); do
+  for id in $(xdotool search --onlyvisible --class mkw-capture 2>/dev/null); do
+    xprop -id "$id" _NET_WM_WINDOW_TYPE 2>/dev/null | grep -q 'WINDOW_TYPE_NORMAL' || continue
     eval "$(xdotool getwindowgeometry --shell "$id" 2>/dev/null)" || continue
-    [ "${WIDTH:-0}" -ge 600 ] && echo "$id $X $Y $((WIDTH / 2 * 2)) $((HEIGHT / 2 * 2))"
+    [ "${WIDTH:-0}" -ge 600 ] || continue
+    ffmpeg -loglevel quiet -y -f x11grab -window_id "$id" -i "$DISPLAY" -frames:v 1 -f null - 2>/dev/null || continue
+    echo "$id $X $Y $((WIDTH / 2 * 2)) $((HEIGHT / 2 * 2))"
   done
 }
-# record <window id> <mp4> : starts ffmpeg on that window; prints its start time (epoch ms).
+# record <window id> <mp4> : starts ffmpeg on that window (cropped to even dimensions, as the
+# encoders need); prints its start time (epoch ms).
 # (Two "Cannot get the image data" lines in the log are ffmpeg's shared-memory probe failing
 # under Xwayland before it falls back; the frames are fine.)
 record() {
   local started; started=$(date +%s%3N)
   ffmpeg -hide_banner -nostdin -loglevel warning -y \
     -f x11grab -framerate 60 -window_id "$1" -draw_mouse 0 -thread_queue_size 1024 -i "$DISPLAY" \
+    -vf 'crop=trunc(iw/2)*2:trunc(ih/2)*2' \
     "${encoder[@]}" -g 60 -pix_fmt yuv420p -movflags +faststart "$2" >"${2%.mp4}-ffmpeg.log" 2>&1 &
   ffmpeg_pids+=($!)
   echo "$started"
@@ -105,6 +144,7 @@ write_meta() {  # write_meta <dir> <x> <y> <w> <h> <ffmpeg start ms>
   cat >"$1/meta.json" <<JSON
 {
   "name": "$name",
+  "browser": "$browser",
   "route": "$route",
   "url": "$url",
   "display": "$DISPLAY",
@@ -124,7 +164,14 @@ JSON
     half=$((ww / 2 / 2 * 2))
     wa="${half}x${wh}+${wx}+${wy}"; wb="${half}x${wh}+$((wx + half))+${wy}"
     echo "capture $name: lock held, two clients at $wa and $wb, up to ${max}s"
-    MKW_WINDOW_A="$wa" MKW_WINDOW_B="$wb" MKW_RACE_SECONDS="${MKW_RACE_SECONDS:-30}" \
+    # In Portal the two windows get differently coloured spaces (red and green, like the karts'
+    # players); MKW_SPACE_THEME_A/_B ("#rrggbb[,strength[,grain]]") pick others.
+    # A site whose game folder seeds a save already has a licence: the clients skip the setup
+    # screens (room-test.js MKW_LICENCE=0).
+    licence=1; [ -f "$site/game/save/rksys.dat" ] && licence=0
+    env "${browser_env[@]}" CHROME_ARGS="$common_args" MKW_WINDOW_A="$wa" MKW_WINDOW_B="$wb" MKW_RACE_SECONDS="${MKW_RACE_SECONDS:-30}" \
+      MKW_LICENCE="${MKW_LICENCE:-$licence}" \
+      MKW_SPACE_THEME_A="${MKW_SPACE_THEME_A:-#c8102e,70,30}" MKW_SPACE_THEME_B="${MKW_SPACE_THEME_B:-#2e8b3a,70,30}" \
       timeout --signal=INT "$max" node tools/browser-test/room-test.js "$url" "$out" >"$out/room-test.out" 2>&1 &
     drive_pid=$!
     wins=
@@ -132,7 +179,7 @@ JSON
       wins=$(chrome_windows)
       [ "$(echo "$wins" | grep -c .)" -ge 2 ] && break; sleep 0.2
     done
-    [ "$(echo "$wins" | grep -c .)" -ge 2 ] || { echo "two Chrome windows did not appear on $DISPLAY (see $out/driver.log)" >&2; exit 1; }
+    [ "$(echo "$wins" | grep -c .)" -ge 2 ] || { echo "two browser windows did not appear on $DISPLAY (see $out/driver.log)" >&2; exit 1; }
     sleep 1.5
     wins=$(chrome_windows)
     read -r ida xa ya wwa wha < <(echo "$wins" | sort -k2 -n | head -1)
@@ -152,13 +199,13 @@ JSON
     echo "capture $name: lock held, route $route, window ${ww}x${wh}+${wx}+${wy}, up to ${max}s"
     # 3. Chrome on a blank page first, so the recording starts before the page loads.
     : >"$out/cmds"
-    VIEWPORT=none IGNORE_DEFAULT_ARGS=--enable-automation \
-    CHROME_ARGS="--ozone-platform=x11 --window-position=$wx,$wy --window-size=$ww,$wh --hide-crash-restore-bubble --no-default-browser-check" \
+    env "${browser_env[@]}" VIEWPORT=none IGNORE_DEFAULT_ARGS=--enable-automation \
+    CHROME_ARGS="$common_args --window-position=$wx,$wy --window-size=$ww,$wh" \
       timeout --signal=INT "$max" node tools/browser-test/pace-drive.js about:blank "$out" &
     drive_pid=$!
     win=
     for _ in $(seq 100); do win=$(chrome_windows | head -1); [ -n "$win" ] && break; sleep 0.2; done
-    [ -n "$win" ] || { echo "no Chrome window appeared on $DISPLAY (see $out/driver.log)" >&2; exit 1; }
+    [ -n "$win" ] || { echo "no browser window appeared on $DISPLAY (see $out/driver.log)" >&2; exit 1; }
     sleep 1.5
     # The window as the window manager placed it (it may have maximised it); meta.json records that.
     read -r wid wx wy ww wh < <(chrome_windows | head -1)

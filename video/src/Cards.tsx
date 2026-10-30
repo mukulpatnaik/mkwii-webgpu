@@ -1,10 +1,12 @@
 import React from 'react';
 import {AbsoluteFill, interpolate, useCurrentFrame, useVideoConfig} from 'remotion';
-import {theme} from './theme';
+import {bluePill, theme, yellowButton} from './theme';
 import {FADE_FRAMES} from './timeline';
 
 // Fades its content in at the start and out at the end of the enclosing sequence.
-export const Fade: React.FC<{children: React.ReactNode; durationInFrames: number}> = ({children, durationInFrames}) => {
+export const Fade: React.FC<{children: React.ReactNode; durationInFrames: number; background?: string}> = ({
+  children, durationInFrames, background = theme.letterbox,
+}) => {
   const frame = useCurrentFrame();
   const opacity = interpolate(
     frame,
@@ -12,85 +14,132 @@ export const Fade: React.FC<{children: React.ReactNode; durationInFrames: number
     [0, 1, 1, 0],
     {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'},
   );
-  return <AbsoluteFill style={{opacity, backgroundColor: theme.bg}}>{children}</AbsoluteFill>;
+  return <AbsoluteFill style={{opacity, backgroundColor: background}}>{children}</AbsoluteFill>;
 };
 
-const cardStyle: React.CSSProperties = {
-  backgroundColor: theme.bg,
-  color: theme.fg,
+// The Wii Menu ground: grey with faint horizontal lines.
+const ground: React.CSSProperties = {
+  backgroundColor: theme.ground,
+  backgroundImage: `repeating-linear-gradient(180deg, ${theme.groundLine} 0 2px, transparent 2px 14px)`,
+  color: theme.text,
   fontFamily: theme.fontFamily,
   justifyContent: 'center',
   alignItems: 'center',
-  padding: 160,
-  textAlign: 'center',
 };
 
-// Lines appear one after another, a few frames apart.
-const Lines: React.FC<{lines: string[]; size: number; weight?: number; color?: string; gap?: number}> = ({
-  lines, size, weight = 600, color = theme.fg, gap = 0.25,
-}) => {
+// A channel-like white tile that settles in from slightly smaller, then holds.
+const Tile: React.FC<{children: React.ReactNode; width?: number}> = ({children, width = 1240}) => {
   const frame = useCurrentFrame();
-  const {fps} = useVideoConfig();
+  const scale = interpolate(frame, [0, 18], [0.96, 1], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'});
   return (
-    <div style={{display: 'flex', flexDirection: 'column', gap: size * gap}}>
-      {lines.map((line, i) => {
-        const at = FADE_FRAMES + i * Math.round(fps * 0.35);
-        const opacity = interpolate(frame, [at, at + 14], [0, 1], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'});
-        const y = interpolate(frame, [at, at + 14], [10, 0], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'});
-        return (
-          <div key={line} style={{fontSize: size, fontWeight: weight, color, opacity, transform: `translateY(${y}px)`, lineHeight: 1.15}}>
-            {line}
-          </div>
-        );
-      })}
+    <div
+      style={{
+        width,
+        padding: '72px 80px',
+        boxSizing: 'border-box',
+        backgroundColor: theme.tile,
+        border: `1px solid ${theme.tileLine}`,
+        borderRadius: 28,
+        boxShadow: '0 0 0 6px #ffffff, 0 4px 18px rgba(0, 0, 0, 0.18)',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: 36,
+        textAlign: 'center',
+        transform: `scale(${scale})`,
+      }}
+    >
+      {children}
     </div>
   );
 };
 
-export const TitleCard: React.FC<{durationInFrames: number}> = ({durationInFrames}) => (
-  <Fade durationInFrames={durationInFrames}>
-    <AbsoluteFill style={cardStyle}>
-      <Lines lines={['Mario Kart Wii.', 'In Chrome.', 'Not an emulator.']} size={112} />
-    </AbsoluteFill>
-  </Fade>
+// Appears a beat after the tile, rising a little.
+const Reveal: React.FC<{children: React.ReactNode; at: number}> = ({children, at}) => {
+  const frame = useCurrentFrame();
+  const opacity = interpolate(frame, [at, at + 14], [0, 1], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'});
+  const y = interpolate(frame, [at, at + 14], [10, 0], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'});
+  return <div style={{opacity, transform: `translateY(${y}px)`}}>{children}</div>;
+};
+
+const Pill: React.FC<{children: React.ReactNode; kind: 'blue' | 'yellow'; size?: number}> = ({children, kind, size = 44}) => (
+  <div
+    style={{
+      ...(kind === 'blue' ? bluePill : yellowButton),
+      display: 'inline-block',
+      fontSize: size,
+      fontWeight: 900,
+      padding: `${Math.round(size * 0.35)}px ${Math.round(size * 1.1)}px`,
+      lineHeight: 1.1,
+    }}
+  >
+    {children}
+  </div>
 );
 
-export const TextCard: React.FC<{durationInFrames: number; lines: string[]; note?: string}> = ({durationInFrames, lines, note}) => (
-  <Fade durationInFrames={durationInFrames}>
-    <AbsoluteFill style={cardStyle}>
-      <Lines lines={lines} size={72} />
-      {note ? <div style={{marginTop: 48, fontSize: 32, fontWeight: 400, color: theme.muted}}>{note}</div> : null}
-    </AbsoluteFill>
-  </Fade>
-);
+export const TitleCard: React.FC<{durationInFrames: number; browser: string}> = ({durationInFrames, browser}) => {
+  const {fps} = useVideoConfig();
+  const beat = Math.round(fps * 0.3);
+  return (
+    <Fade durationInFrames={durationInFrames} background={theme.ground}>
+      <AbsoluteFill style={ground}>
+        <Tile>
+          <Reveal at={FADE_FRAMES}>
+            <div style={{fontSize: 128, fontWeight: 900, lineHeight: 1.05, letterSpacing: '-0.01em'}}>Mario Kart Wii.</div>
+          </Reveal>
+          <div style={{display: 'flex', gap: 28, alignItems: 'center'}}>
+            <Reveal at={FADE_FRAMES + beat}>
+              <Pill kind="blue">In {browser}.</Pill>
+            </Reveal>
+            <Reveal at={FADE_FRAMES + 2 * beat}>
+              <Pill kind="yellow">Not an emulator.</Pill>
+            </Reveal>
+          </div>
+        </Tile>
+      </AbsoluteFill>
+    </Fade>
+  );
+};
 
-export const ClosingCard: React.FC<{durationInFrames: number}> = ({durationInFrames}) => (
-  <Fade durationInFrames={durationInFrames}>
-    <AbsoluteFill style={cardStyle}>
-      <Lines lines={['mukulpatnaik/mkwii-webgpu', 'Build it from your own disc.']} size={80} />
-      <div style={{marginTop: 56, fontSize: 36, fontWeight: 400, color: theme.muted}}>
-        github.com/mukulpatnaik/mkwii-webgpu
-      </div>
-    </AbsoluteFill>
-  </Fade>
-);
+export const ClosingCard: React.FC<{durationInFrames: number}> = ({durationInFrames}) => {
+  const {fps} = useVideoConfig();
+  const beat = Math.round(fps * 0.3);
+  return (
+    <Fade durationInFrames={durationInFrames} background={theme.ground}>
+      <AbsoluteFill style={ground}>
+        <Tile>
+          <Reveal at={FADE_FRAMES}>
+            <div style={{fontSize: 76, fontWeight: 900, lineHeight: 1.1, whiteSpace: 'nowrap'}}>mukulpatnaik/mkwii-webgpu</div>
+          </Reveal>
+          <Reveal at={FADE_FRAMES + beat}>
+            <Pill kind="yellow">Build it from your own disc.</Pill>
+          </Reveal>
+          <Reveal at={FADE_FRAMES + 2 * beat}>
+            <div style={{fontSize: 34, fontWeight: 700, color: theme.muted}}>github.com/mukulpatnaik/mkwii-webgpu</div>
+          </Reveal>
+        </Tile>
+      </AbsoluteFill>
+    </Fade>
+  );
+};
 
 // Stands in for a capture that is not there (captures are never committed) or not yet made.
 export const PlaceholderCard: React.FC<{durationInFrames: number; title: string; capture: string}> = ({durationInFrames, title, capture}) => (
-  <Fade durationInFrames={durationInFrames}>
-    <AbsoluteFill style={cardStyle}>
-      <div style={{position: 'absolute', inset: 80, border: `6px dashed ${theme.muted}`, borderRadius: 12}} />
-      <Lines lines={[title]} size={80} />
-      <div style={{marginTop: 40, fontSize: 32, fontWeight: 400, color: theme.muted, lineHeight: 1.5}}>
-        footage slot: video/public/captures/{capture}/
-        <br />
-        tools/video/capture.sh {capture}
-      </div>
+  <Fade durationInFrames={durationInFrames} background={theme.ground}>
+    <AbsoluteFill style={ground}>
+      <Tile>
+        <div style={{fontSize: 80, fontWeight: 900}}>{title}</div>
+        <div style={{fontSize: 32, fontWeight: 700, color: theme.muted, lineHeight: 1.5}}>
+          footage slot: video/public/captures/{capture}/
+          <br />
+          tools/video/capture.sh {capture}
+        </div>
+      </Tile>
     </AbsoluteFill>
   </Fade>
 );
 
-// A short line of text over footage, bottom right.
+// A short line of text over footage, bottom right, in the page's own overlay colours.
 export const Caption: React.FC<{text: string}> = ({text}) => (
   <div
     style={{
@@ -100,11 +149,11 @@ export const Caption: React.FC<{text: string}> = ({text}) => (
       maxWidth: 1100,
       fontFamily: theme.fontFamily,
       fontSize: 30,
-      fontWeight: 400,
-      color: theme.fg,
-      backgroundColor: 'rgba(11, 12, 16, 0.78)',
-      padding: '14px 22px',
-      borderRadius: 8,
+      fontWeight: 700,
+      color: theme.overlayText,
+      backgroundColor: theme.overlayBg,
+      padding: '14px 24px',
+      borderRadius: 999,
       textAlign: 'right',
       lineHeight: 1.3,
     }}

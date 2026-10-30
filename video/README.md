@@ -1,10 +1,11 @@
 # Demo video
 
-A short, plain demo of the game running in Chrome, assembled with [Remotion](https://www.remotion.dev)
-from recordings of the real thing: a Chrome tab on this machine, driven by the browser-test
-scripts, recorded with ffmpeg. About a minute at 1080p60: a title card, the page booting the game,
-a Grand Prix race with the page's own frame-rate readings, a slot for online multiplayer, and a
-closing card.
+A short, plain demo of the game running in a browser (Chrome, or Portal), assembled with
+[Remotion](https://www.remotion.dev) from recordings of the real thing: a browser window on this
+machine, driven by the browser-test scripts, recorded with ffmpeg. About 36 s at 1080p60, with
+Wii Menu styled cards: a title card, the title screen and the opening movie, the start of a lap by
+the disc's staff ghost with the page's own frame-rate readings, two browser windows in one online
+race, and a closing card.
 
 **Captures and renders show the game and never go into git.** `video/public/captures/` and
 `video/out/` are gitignored (`.gitignore` at the repository root); keep it that way, and check
@@ -22,9 +23,33 @@ recorded). Nothing else may use the GPU display at the same time: the script tak
 the length of the route; leave it alone while it records.
 
 ```bash
-tools/video/capture.sh boot     # page load, Start, shader compile, title screen        (~45 s)
-tools/video/capture.sh race     # the same, then the menus and a 50cc Grand Prix race  (~4.5 min)
+tools/video/capture.sh boot     # page load, Start, shader compile, title screen, opening movie (~45 s)
+tools/video/capture.sh replay   # the same, then Time Trials -> Ghosts -> the staff ghost's replay (~3 min)
+tools/video/capture.sh race     # the same, then a 50cc Grand Prix race driven by the script   (~4 min)
 ```
+
+The demo's gameplay segment uses `replay`: the disc's Luigi Circuit staff ghost (1:29.670) played
+back by the game ("Watch the Replay"), a perfect lap rendered live with nobody at the keys; with no
+`replay` capture it falls back to `race`, the scripted keyboard drive (Grand Prix menus, HUD).
+
+**A seeded save.** Every run starts from a fresh browser profile, so without help the game makes a
+new licence and Mii each time. Stage the site's game folder with a save instead
+(`tools/hosting/stage-game.sh --save rksys.dat <game dir>`; any run's save will do: the page's
+Export save button downloads it). The `replay` route needs it (it goes title -> licence 1 -> main
+menu), and `multiplayer` uses it when it is there (room-test.js `MKW_LICENCE=0`, set by
+capture.sh). Routes count presses, so a press too many or too few puts the D-pad presses on the
+wrong screens; `demo-replay.cmds` anchors on the game's title-scene console line (`waitlog`)
+rather than on time since Start, and takes a screenshot after each D-pad press to check against.
+
+**Portal instead of Chrome.** `MKW_BROWSER=portal` records the Portal dev build (`~/code/browser`
+on `~/code/portal-chromium`; `PORTAL_BROWSER_REPO`, `PORTAL_CHROMIUM_ROOT` and `PORTAL_EXE`
+override the paths) with Portal's own chrome around the page, on a fresh profile whose
+onboarding the drivers release through Portal's probe bridge. The build, the repo's vendored
+mojom bindings and the `dist-portal` bundle have to agree (Portal's `02-build.sh`,
+`export-mojom-bindings.sh`, then `vite build --config src/chrome/vite.config.ts`); a white
+window or a "portal.mojom hash mismatch" page means they do not. The packaged `portal-browser`
+cannot be driven: it drops the debugging port. `meta.json` records the browser, and the title
+card and captions name it.
 
 Each run writes `video/public/captures/<name>/` (multiplayer: `<name>/a/` and `<name>/b/`):
 
@@ -59,7 +84,10 @@ tools/video/capture.sh multiplayer      # two clients in one race through the re
 This runs `tools/browser-test/room-test.js` in windowed mode: two Chrome profiles side by side
 on the display, each half the work area; client A creates a room on the relay
 (`tools/relay/dev-local.sh`, started on 127.0.0.1:8787 if nothing answers there), B joins with
-the code, both press Play online and reach the same race. The staged site has to carry the
+the code, both press Play online and reach the same race. In Portal the two windows get
+differently coloured spaces, red (A) and green (B) by default (`MKW_SPACE_THEME_A` / `_B`:
+`#rrggbb[,strength[,grain]]`; `MKW_SPACE_THEME` does the same for a single-window route). The
+staged site has to carry the
 fork's room fixes (`athena-web-ntsc` at 7b68518 or later; a staging from before it stops at
 "Your saved profile needs attention"), so point `MKW_SITE` at a current staging, for example
 `MKW_SITE=work/sites/relay-test/public`. Each window is recorded on its own:
@@ -79,9 +107,9 @@ npx remotion render Main out/demo.mp4     # 1080p60 H.264 to video/out/ (gitigno
 ```
 
 The compositions read the captures when opened or rendered and take their lengths from the marks,
-so `Main` is about 67 s with the three captures and placeholders where a capture is missing. Frames
+so `Main` is about 36 s with the four captures and placeholders where a capture is missing. Frames
 are rendered by the installed Google Chrome (`REMOTION_BROWSER` points at another browser;
-`REMOTION_BROWSER=` empty lets Remotion download its own headless shell). The typeface, Inter,
+`REMOTION_BROWSER=` empty lets Remotion download its own headless shell). The typeface, Nunito,
 comes from Google Fonts at render time, so rendering needs network access for that one request.
 
 Versions are pinned exactly in `package.json` (Remotion 4.0.539, React 19.3.1).
@@ -91,7 +119,7 @@ Versions are pinned exactly in `package.json` (Remotion 4.0.539, React 19.3.1).
 | Path | What |
 |---|---|
 | `src/Root.tsx` | the compositions and how each loads its capture |
-| `src/Main.tsx` | the demo's order: title, boot, Grand Prix card, gameplay, multiplayer, closing |
+| `src/Main.tsx` | the demo's order: title, intro (boot), gameplay (replay, else race), multiplayer, closing |
 | `src/timeline.ts` | where each clip cuts into the captures (seconds, from the marks) |
 | `src/Boot.tsx`, `src/Gameplay.tsx`, `src/Multiplayer.tsx` | the three segments |
 | `src/Clip.tsx`, `src/FpsOverlay.tsx`, `src/Cards.tsx` | a capture window with caption and fps overlay; the cards |

@@ -20,6 +20,7 @@ export type Perf = {
 };
 export type Meta = {
   name: string;
+  browser?: 'chrome' | 'portal';
   durationSec: number;
   fps: number;
   window: {x: number; y: number; width: number; height: number};
@@ -28,7 +29,7 @@ export type Capture = {name: string; src: string; meta: Meta; perf: Perf};
 
 // Capture names are folders under public/captures/: boot, race, and multiplayer/a + multiplayer/b
 // (the two clients of one online race, recorded side by side).
-export type CaptureName = 'boot' | 'race' | 'multiplayer/a' | 'multiplayer/b';
+export type CaptureName = 'boot' | 'replay' | 'race' | 'multiplayer/a' | 'multiplayer/b';
 
 const fetchJson = async (name: string, file: string) => {
   const res = await fetch(staticFile(`captures/${name}/${file}`));
@@ -47,6 +48,9 @@ export const loadCapture = async (name: CaptureName): Promise<Capture | null> =>
     return null;
   }
 };
+
+// The browser the capture was recorded in, as the cards and captions name it.
+export const browserName = (c: Capture | null | undefined): string => (c?.meta.browser === 'portal' ? 'Portal' : 'Chrome');
 
 export const markerTime = (c: Capture, name: string): number | null =>
   c.perf.markers.find((m) => m.name === name)?.t ?? null;
