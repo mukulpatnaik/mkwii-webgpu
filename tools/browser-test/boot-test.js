@@ -4,6 +4,7 @@
 // With MKW_DISC=/path/to/your/disc.wbfs, the page's disc picker is given that file (read locally
 // by the page, never copied) for a site without a staged game folder. MKW_HTTP_USER and
 // MKW_HTTP_PASSWORD answer a server's HTTP basic auth challenge (tools/hosting/serve-nginx.sh --user).
+// MKW_COLOR_SCHEME=dark|light emulates the system colour scheme.
 const { chromium } = require('playwright-core');
 const fs = require('fs');
 const path = require('path');
@@ -27,6 +28,8 @@ fs.mkdirSync(outdir, { recursive: true });
   });
   const page = await browser.newPage({
     viewport: { width: 1280, height: 860 },
+    // MKW_COLOR_SCHEME=dark|light emulates the system theme (the page follows it).
+    colorScheme: process.env.MKW_COLOR_SCHEME === 'dark' ? 'dark' : process.env.MKW_COLOR_SCHEME === 'light' ? 'light' : undefined,
     httpCredentials: process.env.MKW_HTTP_USER
       ? { username: process.env.MKW_HTTP_USER, password: process.env.MKW_HTTP_PASSWORD || '' } : undefined,
   });
