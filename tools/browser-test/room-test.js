@@ -24,6 +24,8 @@
 // (dev-local.sh --trace). MKW_LICENCE=0 skips the profile setup when the site's staged game folder
 // seeds a save (game/save/rksys.dat). MKW_BOT=1 drives both karts with kart-bot.js (a steering bot
 // on a fake pad) instead of the fixed keyboard drive (hold accelerate, tap left and right).
+// MKW_CHARACTER_KEYS_A / _B: menu keys pressed on that client's character screen before choosing
+// (e.g. "d" moves the cursor one column right), so the two drivers can differ.
 //
 // For the demo video (tools/video/capture.sh multiplayer): MKW_WINDOW_A and MKW_WINDOW_B
 // ("WxH+X+Y") put the two clients in X11 windows of that size and place on one display, with no
@@ -251,6 +253,14 @@ let ok = false;
     if (bot) say(`${c.label}: bot ${await c.page.evaluate(() => window.__mkwBot.start())}`);
     say(`${c.label}: roster ${JSON.stringify(await c.roster())}`);
     await c.shot('character-select');
+    // A different character: menu keys (WASD moves the cursor) before the first A press.
+    const keys = (process.env[`MKW_CHARACTER_KEYS_${c.label.toUpperCase()}`] || '').split(/\s+/).filter(Boolean);
+    if (keys.length) {
+      await sleep(1500);
+      for (const key of keys) { await c.page.keyboard.down(key); await sleep(150); await c.page.keyboard.up(key); await sleep(600); }
+      say(`${c.label}: character cursor moved with ${keys.join(' ')}`);
+      await c.shot('character-picked');
+    }
   }));
 
   // Press A through character, vehicle, drift and the course vote until both are racing. The

@@ -28,7 +28,8 @@
 # picker is given it, read locally), DISPLAY (:0), MKW_WINDOW ("WxH+X+Y", default: the display's
 # work area), MKW_RACE_SECONDS (multiplayer: how long both clients drive, default 30),
 # MKW_BOT (multiplayer: 1, the default, drives both karts with tools/browser-test/kart-bot.js; 0 for
-# the fixed keyboard drive).
+# the fixed keyboard drive), MKW_CHARACTER_KEYS_A / _B (multiplayer: menu keys on that client's
+# character screen; B defaults to "d", one column right of Mario, so the two drivers differ).
 # MKW_BROWSER=portal records the Portal dev build (~/code/browser on ~/code/portal-chromium:
 # PORTAL_BROWSER_REPO and PORTAL_CHROMIUM_ROOT override those paths) with Portal's own chrome
 # instead of Google Chrome; MKW_BROWSER=chrome is the default. tools/browser-test/portal.js says
@@ -174,7 +175,7 @@ JSON
     # screens (room-test.js MKW_LICENCE=0).
     licence=1; [ -f "$site/game/save/rksys.dat" ] && licence=0
     env "${browser_env[@]}" CHROME_ARGS="$common_args" MKW_WINDOW_A="$wa" MKW_WINDOW_B="$wb" MKW_RACE_SECONDS="${MKW_RACE_SECONDS:-30}" \
-      MKW_LICENCE="${MKW_LICENCE:-$licence}" MKW_BOT="${MKW_BOT:-1}" \
+      MKW_LICENCE="${MKW_LICENCE:-$licence}" MKW_BOT="${MKW_BOT:-1}" MKW_CHARACTER_KEYS_B="${MKW_CHARACTER_KEYS_B-d}" \
       MKW_SPACE_THEME_A="${MKW_SPACE_THEME_A:-#c8102e,70,30}" MKW_SPACE_THEME_B="${MKW_SPACE_THEME_B:-#2e8b3a,70,30}" \
       timeout --signal=INT "$max" node tools/browser-test/room-test.js "$url" "$out" >"$out/room-test.out" 2>&1 &
     drive_pid=$!
