@@ -21,12 +21,15 @@
 //   * "waitlog <timeoutSec> <regex>": waits until a console line matches (the regex is the rest of
 //     the line); only lines after the previous waitlog's match count, as in parity-drive.js. Menu
 //     routes anchor on the game's own lines instead of counting from Start, whose timing varies.
+//   * window.__mkwGuest in the page (guest-memory.js): the game's memory for `eval` lines, e.g.
+//     `eval window.__mkwGuest.autodrive('ghost')` (the staff ghost's inputs on the player's kart).
 // Usage (same command file protocol as drive.js):
 //   DISPLAY=:0 flock /tmp/mkw-chrome.lock node pace-drive.js "<url>" <outdir>
 const { chromium } = require('playwright-core');
 const fs = require('fs');
 const path = require('path');
 const portal = require('./portal'); // MKW_CHROME, MKW_PORTAL: another Chromium, e.g. the Portal dev build
+const guestMemory = require('./guest-memory');
 const [url, outdir] = process.argv.slice(2);
 fs.mkdirSync(outdir, { recursive: true });
 const cmdFile = path.join(outdir, 'cmds');
@@ -64,6 +67,7 @@ const traceCategories = (process.env.TRACE_CATEGORIES ||
     say(`${portal.executable()} args: ${extraArgs.join(' ') || '(none extra)'}`);
     page = await browser.newPage({ viewport });
   }
+  await page.addInitScript(guestMemory);
   const log = fs.createWriteStream(path.join(outdir, 'console.log'));
   const t0 = Date.now();
   const stamp = () => ((Date.now() - t0) / 1000).toFixed(1);

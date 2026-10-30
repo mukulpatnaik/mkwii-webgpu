@@ -29,7 +29,7 @@ export type Capture = {name: string; src: string; meta: Meta; perf: Perf};
 
 // Capture names are folders under public/captures/: boot, race, and multiplayer/a + multiplayer/b
 // (the two clients of one online race, recorded side by side).
-export type CaptureName = 'boot' | 'replay' | 'race' | 'multiplayer/a' | 'multiplayer/b';
+export type CaptureName = 'boot' | 'timetrial' | 'race' | 'multiplayer/a' | 'multiplayer/b';
 
 const fetchJson = async (name: string, file: string) => {
   const res = await fetch(staticFile(`captures/${name}/${file}`));

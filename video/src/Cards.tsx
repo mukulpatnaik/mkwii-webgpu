@@ -77,7 +77,7 @@ const Pill: React.FC<{children: React.ReactNode; kind: 'blue' | 'yellow'; size?:
   </div>
 );
 
-export const TitleCard: React.FC<{durationInFrames: number; browser: string}> = ({durationInFrames, browser}) => {
+export const TitleCard: React.FC<{durationInFrames: number}> = ({durationInFrames}) => {
   const {fps} = useVideoConfig();
   const beat = Math.round(fps * 0.3);
   return (
@@ -87,14 +87,9 @@ export const TitleCard: React.FC<{durationInFrames: number; browser: string}> = 
           <Reveal at={FADE_FRAMES}>
             <div style={{fontSize: 128, fontWeight: 900, lineHeight: 1.05, letterSpacing: '-0.01em'}}>Mario Kart Wii.</div>
           </Reveal>
-          <div style={{display: 'flex', gap: 28, alignItems: 'center'}}>
-            <Reveal at={FADE_FRAMES + beat}>
-              <Pill kind="blue">In {browser}.</Pill>
-            </Reveal>
-            <Reveal at={FADE_FRAMES + 2 * beat}>
-              <Pill kind="yellow">Not an emulator.</Pill>
-            </Reveal>
-          </div>
+          <Reveal at={FADE_FRAMES + beat}>
+            <Pill kind="blue">In the browser via WebGPU.</Pill>
+          </Reveal>
         </Tile>
       </AbsoluteFill>
     </Fade>

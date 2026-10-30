@@ -3,7 +3,7 @@
 # Record a scripted Chrome session of the game for the demo video (video/README.md).
 #
 #   tools/video/capture.sh boot            # page load, Start, shader compile, title     (~45 s)
-#   tools/video/capture.sh replay          # the same, then the staff ghost's replay     (~3 min)
+#   tools/video/capture.sh timetrial       # the same, then a Time Trial on the staff ghost's inputs (~3 min)
 #   tools/video/capture.sh race            # the same, then a 50cc Grand Prix race       (~4 min)
 #   tools/video/capture.sh multiplayer     # two clients in one race through the relay   (~4 min)
 #   tools/video/capture.sh <name> <route.cmds> [max-seconds]
@@ -58,7 +58,7 @@ name="${1:?usage: $0 <name> [route.cmds] [max-seconds]}"
 case "$name" in
   boot)        route="${2:-tools/browser-test/routes/demo-boot.cmds}"; max="${3:-120}" ;;
   race)        route="${2:-tools/browser-test/routes/demo-race.cmds}"; max="${3:-330}" ;;
-  replay)      route="${2:-tools/browser-test/routes/demo-replay.cmds}"; max="${3:-260}" ;;
+  timetrial)   route="${2:-tools/browser-test/routes/demo-timetrial.cmds}"; max="${3:-260}" ;;
   multiplayer) route=room-test; max="${2:-600}" ;;
   *)           route="${2:?a route file (tools/browser-test/routes/*.cmds) is needed for $name}"; max="${3:-300}" ;;
 esac
@@ -70,8 +70,8 @@ url="http://127.0.0.1:$port/WiiCompiled.html?muted"
 out="video/public/captures/$name"
 [ -d tools/browser-test/node_modules/playwright-core ] || { echo "run: (cd tools/browser-test && npm install)" >&2; exit 1; }
 [ -d "$site" ] || { echo "no staged site at $site (MKW_SITE)" >&2; exit 1; }
-[ "$name" != replay ] || [ -f "$site/game/save/rksys.dat" ] \
-  || echo "warning: the replay route expects a licence in slot 1, but $site/game has no save (tools/hosting/stage-game.sh --save)" >&2
+[ "$name" != timetrial ] || [ -f "$site/game/save/rksys.dat" ] \
+  || echo "warning: the timetrial route expects a licence in slot 1, but $site/game has no save (tools/hosting/stage-game.sh --save)" >&2
 
 rm -rf "$out"; mkdir -p "$out"
 ffmpeg_pids=()

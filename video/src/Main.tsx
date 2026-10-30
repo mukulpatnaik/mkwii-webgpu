@@ -1,6 +1,6 @@
 import React from 'react';
 import {AbsoluteFill, Series} from 'remotion';
-import {browserName, Capture} from './captures';
+import {Capture} from './captures';
 import {ClosingCard, TitleCard} from './Cards';
 import {Boot, bootFrames} from './Boot';
 import {Gameplay, gameplayFrames} from './Gameplay';
@@ -26,7 +26,7 @@ export const Main: React.FC<MainProps> = (props) => {
     <AbsoluteFill style={{backgroundColor: theme.letterbox}}>
       <Series>
         <Series.Sequence durationInFrames={seg.title}>
-          <TitleCard durationInFrames={seg.title} browser={browserName(props.boot ?? props.gameplay)} />
+          <TitleCard durationInFrames={seg.title} />
         </Series.Sequence>
         <Series.Sequence durationInFrames={seg.intro}>
           <Boot capture={props.boot} />

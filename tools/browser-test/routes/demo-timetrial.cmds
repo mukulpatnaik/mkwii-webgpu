@@ -1,0 +1,69 @@
+# Demo capture "timetrial" (tools/video/capture.sh timetrial): the same start as demo-boot (Start,
+# the controls panel hidden, the opening), then title -> licence 1 -> Single Player -> Time Trials
+# -> default character, kart and drift -> Mushroom Cup -> Luigi Circuit -> Ghosts -> "Race This
+# Ghost" -> Start Race: OK, with autodrive armed (guest-memory.js): the player's own kart drives
+# the race on the disc's staff ghost's recorded inputs (1:29.670, scripts/parity/rkg-info.py),
+# read by the game frame by frame as it reads any ghost, with the Time Trial's camera and HUD and
+# no ghost kart on the track. Marks: page, start, title, main-menu, ghosts, ok (the press that
+# loads the race); the capture's perf.json adds race-loaded from the game's own log.
+#
+# Needs a licence in slot 1: the site's game folder seeds a save (tools/hosting/stage-game.sh
+# --save rksys.dat; one exported from any run with the page's Export save button will do).
+#
+# Left click is A, and every press counts: one press too many or too few and the D-pad presses
+# land on the wrong screens. A D-pad press is also lost when it arrives before a menu has slid in;
+# the Single Player menu is the slowest (black for ~2 s, ready at ~5 s on an idle machine), so it
+# gets 8 s.
+mark page
+waitstart 90000
+mark start
+wait 2500
+eval document.getElementById('hide-controls').click()
+# The title scene: the game's THP library announces itself as it starts (the first such line).
+# Counting from Start instead put the route one press off whenever the boot took a little more or
+# less time (the attract demo it meant to skip had not started yet).
+waitlog 120 RVL_SDK - THP
+mark title
+wait 3000
+# title -> Select License (licence 1 under the cursor) -> main menu
+click 500 430
+wait 3000
+click 500 430
+wait 4500
+mark main-menu
+# Single Player, then down to Time Trials
+click 500 430
+wait 8000
+key ArrowDown 150
+wait 1500
+shot single-player
+click 500 430
+wait 4500
+# character -> kart -> drift -> Mushroom Cup -> Luigi Circuit -> Ghosts screen
+click 500 430
+wait 4500
+click 500 430
+wait 4500
+click 500 430
+wait 4500
+click 500 430
+wait 4500
+click 500 430
+wait 8000
+mark ghosts
+shot ghosts
+# "Race This Ghost" (under the cursor) -> Start Race: OK, which writes the ghost into the race
+# setup; autodrive moves it onto player 0 before the race loads.
+click 500 430
+wait 4500
+eval window.__mkwGuest.autodrive('ghost')
+mark ok
+click 500 430
+waitlog 10 \[autodrive\] ghost
+# the race: about 9 s of flyover and countdown, then the ghost's 1:29.670 and the finish
+wait 30000
+wait 30000
+wait 30000
+wait 20000
+mark end
+wait 500
