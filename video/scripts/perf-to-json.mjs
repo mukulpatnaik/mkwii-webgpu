@@ -6,7 +6,8 @@
 // console.log lines are `[seconds since the driver started] [type] text`. The first line gives the
 // driver's epoch time and meta.json gives ffmpeg's, so every console time becomes a time in
 // capture.mp4. Collected: every `[web-perf] fps=` sample (the page's own 3-second average),
-// the driver's marks (`[driver] mark <name>`, the Start click, page loads) and the first
+// the driver's marks (`[driver] mark <name>`, the Start click, page loads), the room and relay
+// `[vnet]` lines of online play (the relay connection) as events, and the first
 // `[web-pace] race steps/s` line at race pace, as a fallback race start. Two marks come from the
 // game's own console lines, since no route command can know when they happen: `title-loaded`
 // (the disc read of Scene/UI/Title.szs, right before the title screen) and `race-loaded` (the
@@ -24,10 +25,10 @@ if (!t0) { console.error('console.log does not start with the driver t0 line'); 
 const offset = (t0 - meta.ffmpegStartEpochMs) / 1000; // console time + offset = video time
 const toVideo = (s) => Math.round((Number(s) + offset) * 1000) / 1000;
 
-const samples = [], markers = [];
+const samples = [], markers = [], events = [];
 let raceStart = null;
 for (const line of lines) {
-  const m = line.match(/^\[([\d.]+)\] \[(\w+)\] (.*)$/);
+  const m = line.match(/^\[\s*([\d.]+)\] \[(\w+)\] (.*)$/);
   if (!m) continue;
   const [, t, type, text] = m;
   let f;
@@ -48,6 +49,10 @@ for (const line of lines) {
   } else if (raceStart === null && (f = text.match(/^\[web-pace\] race steps\/s=([\d.]+)/)) && Number(f[1]) >= 30) {
     raceStart = toVideo(t) - 3; // the line sums the previous three seconds
   }
+  // Online play: the relay lines, for a ticker over the footage (text as printed).
+  if (/^\[vnet\]/.test(text)) {
+    events.push({ t: toVideo(t), text: text.replace(/\s+/g, ' ').slice(0, 120) });
+  }
 }
 const perf = {
   capture: meta.name,
@@ -55,6 +60,7 @@ const perf = {
   offsetSec: offset,
   samples,
   markers,
+  events,
   raceStartSec: raceStart,
   fpsMin: samples.length ? Math.min(...samples.map((s) => s.fps)) : null,
   fpsMedian: samples.length ? [...samples.map((s) => s.fps)].sort((a, b) => a - b)[samples.length >> 1] : null,

@@ -2,33 +2,39 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Record a scripted Chrome session of the game for the demo video (video/README.md).
 #
-#   tools/video/capture.sh boot            # page load, Start, opening, title      (~45 s)
-#   tools/video/capture.sh race            # the same, then a 50cc Grand Prix race (~4.5 min)
+#   tools/video/capture.sh boot            # page load, Start, shader compile, title     (~45 s)
+#   tools/video/capture.sh race            # the same, then a 50cc Grand Prix race       (~4 min)
+#   tools/video/capture.sh multiplayer     # two clients in one race through the relay   (~4 min)
 #   tools/video/capture.sh <name> <route.cmds> [max-seconds]
 #
 # What it does: serves the staged site on 127.0.0.1 (unless something already listens on the
 # port), takes the GPU/display lock (/tmp/mkw-chrome.lock, see tools/browser-test/README.md),
-# opens the real Chrome on DISPLAY :0 with tools/browser-test/pace-drive.js, records the Chrome
-# window with ffmpeg x11grab at 60 fps (NVENC H.264 when available, else libx264), runs the route
-# and writes to video/public/captures/<name>/:
+# opens the real Chrome on DISPLAY :0 as an X11 window (on a Wayland desktop a Wayland window
+# could not be recorded), drives it with tools/browser-test/pace-drive.js and the route, records
+# the window by id with ffmpeg x11grab at 60 fps (NVENC H.264 when available, else libx264) and
+# writes to video/public/captures/<name>/:
 #   capture.mp4   the recording           console.log   the page's console (with driver marks)
 #   meta.json     window, times, length   perf.json     fps samples and marks on the video clock
 #   driver.log, cmds                      (and any screenshots the route takes)
+# "multiplayer" runs tools/browser-test/room-test.js instead (two Chrome windows side by side,
+# the room relay from tools/relay/dev-local.sh on 127.0.0.1:8787 unless one is running) and
+# records each window: video/public/captures/multiplayer/a/ and /b/, each with the files above.
 # The capture folder is gitignored: it shows the game and never goes into git.
 #
 # Environment: MKW_SITE (default work/sites/release-game/public, the staged site with the game
 # folder), MKW_PORT (8032), MKW_DISC (a disc image for a site without a game folder: the page's
 # picker is given it, read locally), DISPLAY (:0), MKW_WINDOW ("WxH+X+Y", default: the display's
-# work area, as the window manager places the window).
+# work area), MKW_RACE_SECONDS (multiplayer: how long both clients drive, default 30).
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 name="${1:?usage: $0 <name> [route.cmds] [max-seconds]}"
 case "$name" in
-  boot) route="${2:-tools/browser-test/routes/demo-boot.cmds}"; max="${3:-120}" ;;
-  race) route="${2:-tools/browser-test/routes/demo-race.cmds}"; max="${3:-330}" ;;
-  *)    route="${2:?a route file (tools/browser-test/routes/*.cmds) is needed for $name}"; max="${3:-300}" ;;
+  boot)        route="${2:-tools/browser-test/routes/demo-boot.cmds}"; max="${3:-120}" ;;
+  race)        route="${2:-tools/browser-test/routes/demo-race.cmds}"; max="${3:-330}" ;;
+  multiplayer) route=room-test; max="${2:-600}" ;;
+  *)           route="${2:?a route file (tools/browser-test/routes/*.cmds) is needed for $name}"; max="${3:-300}" ;;
 esac
-[ -f "$route" ] || { echo "no such route: $route" >&2; exit 1; }
+[ "$route" = room-test ] || [ -f "$route" ] || { echo "no such route: $route" >&2; exit 1; }
 site="${MKW_SITE:-work/sites/release-game/public}"
 port="${MKW_PORT:-8032}"
 export DISPLAY="${DISPLAY:-:0}"
@@ -38,10 +44,12 @@ out="video/public/captures/$name"
 [ -d "$site" ] || { echo "no staged site at $site (MKW_SITE)" >&2; exit 1; }
 
 rm -rf "$out"; mkdir -p "$out"
+ffmpeg_pids=()
 cleanup() {
-  if [ -n "${ffmpeg_pid:-}" ]; then kill -INT "$ffmpeg_pid" 2>/dev/null || true; wait "$ffmpeg_pid" 2>/dev/null || true; fi
+  for p in "${ffmpeg_pids[@]}"; do kill -INT "$p" 2>/dev/null || true; wait "$p" 2>/dev/null || true; done
   if [ -n "${drive_pid:-}" ]; then kill "$drive_pid" 2>/dev/null || true; fi
   if [ -n "${server_pid:-}" ]; then kill "$server_pid" 2>/dev/null || true; fi
+  if [ -n "${relay_pid:-}" ]; then kill "$relay_pid" 2>/dev/null || true; fi
 }
 trap cleanup EXIT
 
@@ -52,11 +60,17 @@ if ! curl -fsS -o /dev/null "http://127.0.0.1:$port/WiiCompiled.html" 2>/dev/nul
   for _ in $(seq 50); do curl -fsS -o /dev/null "http://127.0.0.1:$port/WiiCompiled.html" 2>/dev/null && break; sleep 0.2; done
   curl -fsS -o /dev/null "http://127.0.0.1:$port/WiiCompiled.html" || { echo "the server did not come up (see $out/server.log)" >&2; exit 1; }
 fi
+# 1b. The room relay, for multiplayer, unless one is running.
+if [ "$route" = room-test ] && ! curl -s -o /dev/null http://127.0.0.1:8787/ 2>/dev/null; then
+  tools/relay/dev-local.sh >"$out/relay.log" 2>&1 &
+  relay_pid=$!
+  for _ in $(seq 300); do curl -s -o /dev/null http://127.0.0.1:8787/ 2>/dev/null && break; sleep 0.2; done
+  curl -s -o /dev/null http://127.0.0.1:8787/ || { echo "the relay did not come up (see $out/relay.log)" >&2; exit 1; }
+fi
 
-# 2. Window placement: the display's work area (the screen minus panels), or MKW_WINDOW. Chrome is
-# asked for an X11 window (on a Wayland desktop it would otherwise open a Wayland window that
-# neither xdotool nor ffmpeg's x11grab can see), and the recording grabs that window by id: under
-# rootless Xwayland the X root window is black, only the window itself has the pixels.
+# 2. Window placement: the display's work area (the screen minus panels), or MKW_WINDOW. Under
+# rootless Xwayland the X root window is black, only the windows themselves have pixels, so the
+# recording grabs each Chrome window by id.
 if [ -n "${MKW_WINDOW:-}" ]; then
   IFS='x+' read -r ww wh wx wy <<<"$MKW_WINDOW"
 else
@@ -68,63 +82,109 @@ encoder=(-c:v libx264 -preset veryfast -crf 18)
 ffmpeg -hide_banner -encoders 2>/dev/null | grep -q h264_nvenc && nvidia-smi >/dev/null 2>&1 \
   && encoder=(-c:v h264_nvenc -preset p4 -tune hq -rc vbr -cq 19 -b:v 0 -maxrate 40M -bufsize 80M)
 
-(
-  flock 9
-  echo "capture $name: lock held, route $route, window ${ww}x${wh}+${wx}+${wy}, up to ${max}s"
-  # 3. Chrome on a blank page first, so the recording starts before the page loads.
-  : >"$out/cmds"
-  VIEWPORT=none IGNORE_DEFAULT_ARGS=--enable-automation \
-  CHROME_ARGS="--ozone-platform=x11 --window-position=$wx,$wy --window-size=$ww,$wh --hide-crash-restore-bubble --no-default-browser-check" \
-    timeout --signal=INT "$max" node tools/browser-test/pace-drive.js about:blank "$out" &
-  drive_pid=$!
-  wid=
-  for _ in $(seq 100); do
-    wid=$(xdotool search --onlyvisible --class google-chrome 2>/dev/null | tail -1 || true)
-    [ -n "$wid" ] && break; sleep 0.2
+# Visible Chrome windows at least 600 px wide, as "id x y w h" lines.
+chrome_windows() {
+  for id in $(xdotool search --onlyvisible --class google-chrome 2>/dev/null); do
+    eval "$(xdotool getwindowgeometry --shell "$id" 2>/dev/null)" || continue
+    [ "${WIDTH:-0}" -ge 600 ] && echo "$id $X $Y $((WIDTH / 2 * 2)) $((HEIGHT / 2 * 2))"
   done
-  [ -n "$wid" ] || { echo "no Chrome window appeared on $DISPLAY (see $out/driver.log)" >&2; exit 1; }
-  sleep 1.5
-  # The window as the window manager placed it (it may have maximised it); meta.json records that.
-  eval "$(xdotool getwindowgeometry --shell "$wid")"   # X Y WIDTH HEIGHT
-  wx=$X; wy=$Y; ww=$((WIDTH / 2 * 2)); wh=$((HEIGHT / 2 * 2))
-  echo "recording window $wid (${ww}x${wh}+${wx}+${wy}) of $DISPLAY"
-  # 4. Record the window. (Two "Cannot get the image data" lines in ffmpeg.log are its shared
-  # memory probe failing under Xwayland before it falls back; the frames are fine.)
-  ffmpeg_start_ms=$(date +%s%3N)
+}
+# record <window id> <mp4> : starts ffmpeg on that window; prints its start time (epoch ms).
+# (Two "Cannot get the image data" lines in the log are ffmpeg's shared-memory probe failing
+# under Xwayland before it falls back; the frames are fine.)
+record() {
+  local started; started=$(date +%s%3N)
   ffmpeg -hide_banner -nostdin -loglevel warning -y \
-    -f x11grab -framerate 60 -window_id "$wid" -draw_mouse 0 -thread_queue_size 1024 -i "$DISPLAY" \
-    "${encoder[@]}" -g 60 -pix_fmt yuv420p -movflags +faststart "$out/capture.mp4" >"$out/ffmpeg.log" 2>&1 &
-  ffmpeg_pid=$!
-  sleep 1
-  # 5. The route: load the page, run the script; then stop the recording while the window is still
-  # there (ffmpeg dies with BadMatch when the window it grabs goes away) and close Chrome.
-  {
-    [ -n "${MKW_DISC:-}" ] && echo "goto $url&disc=local" || echo "goto $url"
-    [ -n "${MKW_DISC:-}" ] && echo "pick $MKW_DISC"
-    echo "script $route"
-    echo "mark end-of-route"
-  } >>"$out/cmds"
-  while kill -0 "$drive_pid" 2>/dev/null && ! grep -q 'done: mark end-of-route' "$out/driver.log" 2>/dev/null; do sleep 0.5; done
-  kill -INT "$ffmpeg_pid" 2>/dev/null || true; wait "$ffmpeg_pid" || true; ffmpeg_pid=
-  echo quit >>"$out/cmds"
-  wait "$drive_pid" || echo "driver ended with status $? (timeout ${max}s or an error; see $out/driver.log)"
-  drive_pid=
-  duration=$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$out/capture.mp4" || echo 0)
-  cat >"$out/meta.json" <<JSON
+    -f x11grab -framerate 60 -window_id "$1" -draw_mouse 0 -thread_queue_size 1024 -i "$DISPLAY" \
+    "${encoder[@]}" -g 60 -pix_fmt yuv420p -movflags +faststart "$2" >"${2%.mp4}-ffmpeg.log" 2>&1 &
+  ffmpeg_pids+=($!)
+  echo "$started"
+}
+write_meta() {  # write_meta <dir> <x> <y> <w> <h> <ffmpeg start ms>
+  local duration; duration=$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$1/capture.mp4" 2>/dev/null || echo 0)
+  cat >"$1/meta.json" <<JSON
 {
   "name": "$name",
   "route": "$route",
   "url": "$url",
   "display": "$DISPLAY",
-  "window": {"x": $wx, "y": $wy, "width": $ww, "height": $wh},
+  "window": {"x": $2, "y": $3, "width": $4, "height": $5},
   "fps": 60,
-  "ffmpegStartEpochMs": $ffmpeg_start_ms,
+  "ffmpegStartEpochMs": $6,
   "durationSec": ${duration:-0},
   "recordedAt": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 }
 JSON
+}
+
+(
+  flock 9
+  if [ "$route" = room-test ]; then
+    # Two clients side by side, each half the work area.
+    half=$((ww / 2 / 2 * 2))
+    wa="${half}x${wh}+${wx}+${wy}"; wb="${half}x${wh}+$((wx + half))+${wy}"
+    echo "capture $name: lock held, two clients at $wa and $wb, up to ${max}s"
+    MKW_WINDOW_A="$wa" MKW_WINDOW_B="$wb" MKW_RACE_SECONDS="${MKW_RACE_SECONDS:-30}" \
+      timeout --signal=INT "$max" node tools/browser-test/room-test.js "$url" "$out" >"$out/room-test.out" 2>&1 &
+    drive_pid=$!
+    wins=
+    for _ in $(seq 150); do
+      wins=$(chrome_windows)
+      [ "$(echo "$wins" | grep -c .)" -ge 2 ] && break; sleep 0.2
+    done
+    [ "$(echo "$wins" | grep -c .)" -ge 2 ] || { echo "two Chrome windows did not appear on $DISPLAY (see $out/driver.log)" >&2; exit 1; }
+    sleep 1.5
+    wins=$(chrome_windows)
+    read -r ida xa ya wwa wha < <(echo "$wins" | sort -k2 -n | head -1)
+    read -r idb xb yb wwb whb < <(echo "$wins" | sort -k2 -n | tail -1)
+    mkdir -p "$out/a" "$out/b"
+    echo "recording window $ida (${wwa}x${wha}+${xa}+${ya}) as a and $idb (${wwb}x${whb}+${xb}+${yb}) as b"
+    starta=$(record "$ida" "$out/a/capture.mp4")
+    startb=$(record "$idb" "$out/b/capture.mp4")
+    while kill -0 "$drive_pid" 2>/dev/null && ! grep -q 'mark end' "$out/console-a.log" 2>/dev/null; do sleep 0.5; done
+    for p in "${ffmpeg_pids[@]}"; do kill -INT "$p" 2>/dev/null || true; wait "$p" || true; done; ffmpeg_pids=()
+    wait "$drive_pid" || echo "room-test ended with status $? (see $out/driver.log)"
+    drive_pid=
+    mv "$out/console-a.log" "$out/a/console.log"; mv "$out/console-b.log" "$out/b/console.log"
+    write_meta "$out/a" "$xa" "$ya" "$wwa" "$wha" "$starta"
+    write_meta "$out/b" "$xb" "$yb" "$wwb" "$whb" "$startb"
+  else
+    echo "capture $name: lock held, route $route, window ${ww}x${wh}+${wx}+${wy}, up to ${max}s"
+    # 3. Chrome on a blank page first, so the recording starts before the page loads.
+    : >"$out/cmds"
+    VIEWPORT=none IGNORE_DEFAULT_ARGS=--enable-automation \
+    CHROME_ARGS="--ozone-platform=x11 --window-position=$wx,$wy --window-size=$ww,$wh --hide-crash-restore-bubble --no-default-browser-check" \
+      timeout --signal=INT "$max" node tools/browser-test/pace-drive.js about:blank "$out" &
+    drive_pid=$!
+    win=
+    for _ in $(seq 100); do win=$(chrome_windows | head -1); [ -n "$win" ] && break; sleep 0.2; done
+    [ -n "$win" ] || { echo "no Chrome window appeared on $DISPLAY (see $out/driver.log)" >&2; exit 1; }
+    sleep 1.5
+    # The window as the window manager placed it (it may have maximised it); meta.json records that.
+    read -r wid wx wy ww wh < <(chrome_windows | head -1)
+    echo "recording window $wid (${ww}x${wh}+${wx}+${wy}) of $DISPLAY"
+    # 4. Record the window.
+    start=$(record "$wid" "$out/capture.mp4")
+    sleep 1
+    # 5. The route: load the page, run the script; then stop the recording while the window is still
+    # there (ffmpeg dies with BadMatch when the window it grabs goes away) and close Chrome.
+    {
+      [ -n "${MKW_DISC:-}" ] && echo "goto $url&disc=local" || echo "goto $url"
+      [ -n "${MKW_DISC:-}" ] && echo "pick $MKW_DISC"
+      echo "script $route"
+      echo "mark end-of-route"
+    } >>"$out/cmds"
+    while kill -0 "$drive_pid" 2>/dev/null && ! grep -q 'done: mark end-of-route' "$out/driver.log" 2>/dev/null; do sleep 0.5; done
+    for p in "${ffmpeg_pids[@]}"; do kill -INT "$p" 2>/dev/null || true; wait "$p" || true; done; ffmpeg_pids=()
+    echo quit >>"$out/cmds"
+    wait "$drive_pid" || echo "driver ended with status $? (timeout ${max}s or an error; see $out/driver.log)"
+    drive_pid=
+    write_meta "$out" "$wx" "$wy" "$ww" "$wh" "$start"
+  fi
 ) 9>/tmp/mkw-chrome.lock
 
-node video/scripts/perf-to-json.mjs "$out"
-duration=$(python3 -c "import json; print(json.load(open('$out/meta.json'))['durationSec'])")
-echo "capture $name: $out/capture.mp4 ($(du -h "$out/capture.mp4" | cut -f1), $(printf %.1f "$duration") s)"
+for dir in $([ "$route" = room-test ] && echo "$out/a $out/b" || echo "$out"); do
+  node video/scripts/perf-to-json.mjs "$dir"
+  duration=$(python3 -c "import json; print(json.load(open('$dir/meta.json'))['durationSec'])")
+  echo "capture $name: $dir/capture.mp4 ($(du -h "$dir/capture.mp4" | cut -f1), $(printf %.1f "$duration") s)"
+done

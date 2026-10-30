@@ -41,11 +41,18 @@ export const gameplayClip = (c: Capture): ClipWindow => {
   return {...clamp(c, go - 3.5, GAMEPLAY_SECONDS), caption: 'Grand Prix, 50cc, Luigi Circuit, 12 karts.'};
 };
 
-// Multiplayer: the same cut from a "multiplayer" capture, when there is one.
-export const MULTIPLAYER_SECONDS = 14;
-export const multiplayerClip = (c: Capture): ClipWindow => {
-  const go = markerTime(c, 'go') ?? c.perf.raceStartSec ?? 0;
-  return {...clamp(c, go - 2, MULTIPLAYER_SECONDS), caption: 'Online: two browsers in one race, through a relay.'};
+// Multiplayer: two clients of one race through the relay, recorded side by side: the lobby with
+// both names, then the countdown and the start of the race. Cut by client A's marks (both logs
+// carry the same marks).
+export const multiplayerClips = (a: Capture): ClipWindow[] => {
+  const lobby = markerTime(a, 'lobby') ?? 0;
+  const go = markerTime(a, 'go') ?? a.perf.raceStartSec ?? lobby + 90;
+  // Both names are in the roster about half a second after the lobby mark; the countdown's "3"
+  // shows about six seconds before the drivers press accelerate.
+  return [
+    {...clamp(a, lobby + 0.6, 4), caption: 'Two browsers meet in a room through the relay.'},
+    {...clamp(a, go - 7, 11), caption: 'One race, two Chrome windows.'},
+  ];
 };
 
 export const CARD_SECONDS = {title: 5, grandPrix: 3, placeholder: 8, closing: 7};

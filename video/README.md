@@ -26,7 +26,7 @@ tools/video/capture.sh boot     # page load, Start, shader compile, title screen
 tools/video/capture.sh race     # the same, then the menus and a 50cc Grand Prix race  (~4.5 min)
 ```
 
-Each run writes `video/public/captures/<name>/`:
+Each run writes `video/public/captures/<name>/` (multiplayer: `<name>/a/` and `<name>/b/`):
 
 | File | What |
 |---|---|
@@ -50,18 +50,25 @@ after editing the script:
 node video/scripts/perf-to-json.mjs video/public/captures/race
 ```
 
-### The multiplayer slot
-
-The `Multiplayer` composition plays `video/public/captures/multiplayer/` when it exists and shows
-a placeholder card otherwise. Record it the same way once a route for two browsers in one race
-through the relay exists:
+### Multiplayer
 
 ```bash
-tools/video/capture.sh multiplayer tools/browser-test/routes/<that route>.cmds 400
+tools/video/capture.sh multiplayer      # two clients in one race through the relay (~4 min)
 ```
 
-The clip is cut from the route's `go` mark (or the first race-pace console line) like the
-Grand Prix clip, so the route should `mark go` where the countdown ends.
+This runs `tools/browser-test/room-test.js` in windowed mode: two Chrome profiles side by side
+on the display, each half the work area; client A creates a room on the relay
+(`tools/relay/dev-local.sh`, started on 127.0.0.1:8787 if nothing answers there), B joins with
+the code, both press Play online and reach the same race. The staged site has to carry the
+fork's room fixes (`athena-web-ntsc` at 7b68518 or later; a staging from before it stops at
+"Your saved profile needs attention"), so point `MKW_SITE` at a current staging, for example
+`MKW_SITE=work/sites/relay-test/public`. Each window is recorded on its own:
+`video/public/captures/multiplayer/a/` and `/b/` hold a `capture.mp4`, `console.log`,
+`meta.json` and `perf.json` each, with the same marks in both (`lobby`, `play`, `race-loaded`,
+`go`, `end`). `perf.json` also carries the `[vnet]` and `[room-launch]` console lines as
+`events`; the segment shows each client's latest one over its half of the picture. The
+`Multiplayer` composition plays the lobby (both names in the roster) and then the start of the
+race from both windows; with no capture it shows a placeholder card instead.
 
 ## 2. Preview and render
 
@@ -72,7 +79,7 @@ npx remotion render Main out/demo.mp4     # 1080p60 H.264 to video/out/ (gitigno
 ```
 
 The compositions read the captures when opened or rendered and take their lengths from the marks,
-so `Main` is about 60 s with the two captures and placeholders where a capture is missing. Frames
+so `Main` is about 67 s with the three captures and placeholders where a capture is missing. Frames
 are rendered by the installed Google Chrome (`REMOTION_BROWSER` points at another browser;
 `REMOTION_BROWSER=` empty lets Remotion download its own headless shell). The typeface, Inter,
 comes from Google Fonts at render time, so rendering needs network access for that one request.

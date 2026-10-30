@@ -4,11 +4,11 @@ import {Capture} from './captures';
 import {ClosingCard, TextCard, TitleCard} from './Cards';
 import {Boot, bootFrames} from './Boot';
 import {Gameplay, gameplayFrames} from './Gameplay';
-import {Multiplayer, multiplayerFrames} from './Multiplayer';
+import {Multiplayer, multiplayerFrames, MultiplayerProps} from './Multiplayer';
 import {theme} from './theme';
 import {CARD_SECONDS, frames} from './timeline';
 
-export type MainProps = {boot: Capture | null; race: Capture | null; multiplayer: Capture | null};
+export type MainProps = {boot: Capture | null; race: Capture | null; multiplayer: MultiplayerProps};
 
 // The demo, in order; each entry's length in frames, so Root can report the total.
 export const mainSegments = (p: MainProps) => [
@@ -39,7 +39,7 @@ export const Main: React.FC<MainProps> = (props) => {
           <Gameplay capture={props.race} />
         </Series.Sequence>
         <Series.Sequence durationInFrames={seg.multiplayer}>
-          <Multiplayer capture={props.multiplayer} />
+          <Multiplayer a={props.multiplayer.a} b={props.multiplayer.b} />
         </Series.Sequence>
         <Series.Sequence durationInFrames={seg.closing}>
           <ClosingCard durationInFrames={seg.closing} />

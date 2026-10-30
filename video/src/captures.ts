@@ -6,12 +6,14 @@ import {staticFile} from 'remotion';
 
 export type PerfSample = {t: number; fps: number; frames: number};
 export type Marker = {t: number; name: string};
+export type Event = {t: number; text: string};
 export type Perf = {
   capture: string;
   durationSec: number;
   offsetSec: number;
   samples: PerfSample[];
   markers: Marker[];
+  events?: Event[];
   raceStartSec: number | null;
   fpsMin: number | null;
   fpsMedian: number | null;
@@ -24,8 +26,9 @@ export type Meta = {
 };
 export type Capture = {name: string; src: string; meta: Meta; perf: Perf};
 
-export const CAPTURE_NAMES = ['boot', 'race', 'multiplayer'] as const;
-export type CaptureName = (typeof CAPTURE_NAMES)[number];
+// Capture names are folders under public/captures/: boot, race, and multiplayer/a + multiplayer/b
+// (the two clients of one online race, recorded side by side).
+export type CaptureName = 'boot' | 'race' | 'multiplayer/a' | 'multiplayer/b';
 
 const fetchJson = async (name: string, file: string) => {
   const res = await fetch(staticFile(`captures/${name}/${file}`));

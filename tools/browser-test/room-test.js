@@ -23,6 +23,12 @@
 // running race, 1 otherwise. Player-to-player packet rates are in the relay's own log
 // (dev-local.sh --trace). MKW_LICENCE=0 skips the profile setup when the site's staged game folder
 // seeds a save (game/save/rksys.dat).
+//
+// For the demo video (tools/video/capture.sh multiplayer): MKW_WINDOW_A and MKW_WINDOW_B
+// ("WxH+X+Y") put the two clients in X11 windows of that size and place on one display, with no
+// viewport emulation and no automation bar, and hide the page's controls panel once the game is
+// launched. The driver's marks (`[driver] mark <name>`: page, lobby, play, race-loaded, go, end)
+// and its epoch time go into both console logs, so the recording can be cut by them.
 const { chromium } = require('playwright-core');
 const fs = require('fs');
 const os = require('os');
@@ -42,8 +48,19 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const raceSeconds = Number(process.env.MKW_RACE_SECONDS || 30);
 const createLicence = process.env.MKW_LICENCE !== '0';
 const displays = { a: process.env.MKW_DISPLAY_A || process.env.DISPLAY, b: process.env.MKW_DISPLAY_B || process.env.DISPLAY };
+const windows = { a: process.env.MKW_WINDOW_A, b: process.env.MKW_WINDOW_B };
+const windowed = !!(windows.a && windows.b);
 const chromeArgs = ['--enable-unsafe-webgpu', '--enable-features=Vulkan,WebAssemblyExperimentalJSPI', '--ignore-gpu-blocklist',
   '--autoplay-policy=no-user-gesture-required', '--window-size=1280,900'];
+const windowArgs = (spec) => {
+  const m = /^(\d+)x(\d+)\+(\d+)\+(\d+)$/.exec(spec || '');
+  if (!m) return [];
+  // --test-type keeps Chrome's "unsupported command-line flag" bar out of the recording.
+  return [`--window-size=${m[1]},${m[2]}`, `--window-position=${m[3]},${m[4]}`, '--ozone-platform=x11',
+    '--hide-crash-restore-bubble', '--no-default-browser-check', '--test-type'];
+};
+const consoleLogs = [];
+const mark = (name) => { for (const log of consoleLogs) log.write(`[${stamp()}] [driver] mark ${name}\n`); say(`mark ${name}`); };
 
 // The game's menu route from the first screen to the main menu on a fresh save, as timed clicks
 // (left click is A): intro, title, Select Licence, new licence, Choose a Mii, confirm, ready, the
@@ -62,13 +79,16 @@ class Client {
   async launch() {
     this.profileDir = fs.mkdtempSync(path.join(os.tmpdir(), `mkw-room-${this.label}-`));
     this.context = await chromium.launchPersistentContext(this.profileDir, {
-      executablePath: '/usr/bin/google-chrome', headless: false, args: chromeArgs,
-      ignoreDefaultArgs: ['--disable-gpu', '--mute-audio'],
-      viewport: { width: 1280, height: 860 },
+      executablePath: '/usr/bin/google-chrome', headless: false, args: [...chromeArgs, ...windowArgs(windows[this.label])],
+      ignoreDefaultArgs: ['--disable-gpu', '--mute-audio', ...(windowed ? ['--enable-automation'] : [])],
+      chromiumSandbox: windowed, // Chrome's own sandbox stays on: no "--no-sandbox" warning bar in the recording
+      viewport: windowed ? null : { width: 1280, height: 860 },
       env: { ...process.env, DISPLAY: displays[this.label] },
     });
     this.page = this.context.pages()[0] || await this.context.newPage();
     const log = fs.createWriteStream(path.join(outdir, `console-${this.label}.log`), { flags: 'a' });
+    log.write(`[${stamp()}] [driver] t0 epoch_ms=${t0}\n`);
+    consoleLogs.push(log);
     const record = (kind, text) => {
       const line = `[${stamp()}] [${kind}] ${text}`;
       log.write(line + '\n');
@@ -186,6 +206,7 @@ let ok = false;
   await b.page.click('#join-room');
   await b.page.waitForFunction((c) => location.search.includes(`room=${c}`), code, { timeout: 30000 });
   say(`b: joined room ${code}`);
+  mark('page');
 
   // Both: lobby connected (Play online enabled), names set, two in the roster, then Play.
   for (const c of [a, b]) {
@@ -197,7 +218,11 @@ let ok = false;
     say(`${c.label}: lobby ${JSON.stringify(await c.roster())}`);
     await c.shot('lobby');
   }
+  mark('lobby');
+  if (windowed) await sleep(4000); // the lobby with both names, for the recording
   for (const c of [a, b]) { await c.page.click('#start'); say(`${c.label}: clicked Play online`); }
+  mark('play');
+  if (windowed) for (const c of [a, b]) await c.page.evaluate(() => document.getElementById('hide-controls')?.click()).catch(() => {});
 
   // The direct room entry: [vnet] joins the room, the game logs in, character selection opens.
   // A manual or failed hand-off ends the run (the game then needs its own menus).
@@ -238,7 +263,9 @@ let ok = false;
   // a player after 1,800 frames without a new press; a held button alone does not count), then
   // look at the picture and the pacing lines.
   say(`both clients are loading the same race; driving for ${raceSeconds} s`);
+  mark('race-loaded');
   await sleep(12000);
+  mark('go');
   for (const c of [a, b]) { await c.page.mouse.move(500, 430); await c.page.mouse.down(); }
   const raceEnd = Date.now() + raceSeconds * 1000;
   for (let n = 0; Date.now() < raceEnd; n++) {
@@ -280,6 +307,8 @@ let ok = false;
   }
   fs.writeFileSync(path.join(outdir, 'healthy.log'), healthy.join('\n') + '\n');
   say(ok ? 'PASS: both clients raced through the relay' : 'FAIL');
+  mark('end');
+  if (windowed) await sleep(2000); // let a recording stop before the windows go
   await a.close();
   await b.close();
   dlog.end();

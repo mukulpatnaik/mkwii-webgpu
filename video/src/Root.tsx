@@ -4,7 +4,7 @@ import {Boot, bootFrames, SegmentProps} from './Boot';
 import {Capture, CaptureName, loadCapture} from './captures';
 import {Gameplay, gameplayFrames} from './Gameplay';
 import {Main, mainFrames, MainProps} from './Main';
-import {Multiplayer, multiplayerFrames} from './Multiplayer';
+import {Multiplayer, multiplayerFrames, MultiplayerProps} from './Multiplayer';
 import {FPS, HEIGHT, WIDTH} from './timeline';
 
 // Every composition reads its capture(s) from public/captures/ when it is opened or rendered, and
@@ -26,15 +26,29 @@ export const Root: React.FC = () => (
       width={WIDTH}
       height={HEIGHT}
       durationInFrames={FPS * 60}
-      defaultProps={{boot: null, race: null, multiplayer: null} as MainProps}
+      defaultProps={{boot: null, race: null, multiplayer: {a: null, b: null}} as MainProps}
       calculateMetadata={async () => {
-        const [boot, race, multiplayer] = await Promise.all([loadCapture('boot'), loadCapture('race'), loadCapture('multiplayer')]);
-        const props: MainProps = {boot, race, multiplayer};
+        const [boot, race, a, b] = await Promise.all([
+          loadCapture('boot'), loadCapture('race'), loadCapture('multiplayer/a'), loadCapture('multiplayer/b'),
+        ]);
+        const props: MainProps = {boot, race, multiplayer: {a, b}};
         return {props, durationInFrames: mainFrames(props)};
       }}
     />
     <Composition id="Boot" component={Boot} fps={FPS} width={WIDTH} height={HEIGHT} durationInFrames={FPS * 10} {...segment('boot', bootFrames)} />
     <Composition id="Gameplay" component={Gameplay} fps={FPS} width={WIDTH} height={HEIGHT} durationInFrames={FPS * 10} {...segment('race', gameplayFrames)} />
-    <Composition id="Multiplayer" component={Multiplayer} fps={FPS} width={WIDTH} height={HEIGHT} durationInFrames={FPS * 10} {...segment('multiplayer', multiplayerFrames)} />
+    <Composition
+      id="Multiplayer"
+      component={Multiplayer}
+      fps={FPS}
+      width={WIDTH}
+      height={HEIGHT}
+      durationInFrames={FPS * 10}
+      defaultProps={{a: null, b: null} as MultiplayerProps}
+      calculateMetadata={async () => {
+        const [a, b] = await Promise.all([loadCapture('multiplayer/a'), loadCapture('multiplayer/b')]);
+        return {props: {a, b}, durationInFrames: multiplayerFrames({a, b})};
+      }}
+    />
   </>
 );
