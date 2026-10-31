@@ -1,7 +1,9 @@
 # Browser tests (real Chrome, real GPU)
 
 The built-in browser pane has no WebGPU adapter, so tests drive `/usr/bin/google-chrome` on the
-X display with Playwright (`playwright-core`, no browser download).
+X display with Playwright (`playwright-core`, no browser download). On a Mac they drive
+`/Applications/Google Chrome.app` (or `MKW_CHROME`) on the desktop, with Metal instead of the
+Vulkan feature; `tools/video/capture.sh` records them there too (see `video/README.md`).
 
 ```bash
 npm install

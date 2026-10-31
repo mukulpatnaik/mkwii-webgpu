@@ -47,7 +47,7 @@ const traceCategories = (process.env.TRACE_CATEGORIES ||
 (async () => {
   const launchOptions = {
     executablePath: portal.executable(), headless: false,
-    args: ['--enable-unsafe-webgpu', '--enable-features=Vulkan,WebAssemblyExperimentalJSPI', '--ignore-gpu-blocklist',
+    args: ['--enable-unsafe-webgpu', portal.features(), '--ignore-gpu-blocklist',
            '--autoplay-policy=no-user-gesture-required', '--window-size=1280,900', ...portal.portalArgs(), ...extraArgs],
     ignoreDefaultArgs: ignoreArgs,
     env: portal.launchEnv(),

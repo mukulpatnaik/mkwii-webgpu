@@ -28,13 +28,15 @@ export const bootClips = (c: Capture): ClipWindow[] => {
 // "timetrial" capture (a Time Trial whose player kart is driven by the disc's staff ghost's
 // recorded inputs), else the scripted 50cc Grand Prix drive ("race"). The first two have no driver
 // mark for GO: GO shows a fixed time after the course is loaded (the game's `[web-warm] course
-// file` line, `race-loaded`), after the flyover in a Grand Prix.
+// file` line, `race-loaded`), after the flyover in a Grand Prix. That time depends on the machine:
+// the HUD timer, which starts at GO, puts it 21.7 s after race-loaded on Linux and 21.4 s on the
+// Mac (Portal, Apple Silicon).
 export const GAMEPLAY_SECONDS = 8;
-const GP_GO = 21.7;
+const GP_GO_BY_PLATFORM = {linux: 21.7, darwin: 21.4};
 const TIMETRIAL_GO = 8.5;
 export const gameplayClip = (c: Capture): ClipWindow => {
   if (c.name === 'gp') {
-    const go = (markerTime(c, 'race-loaded') ?? markerTime(c, 'ok') ?? 0) + GP_GO;
+    const go = (markerTime(c, 'race-loaded') ?? markerTime(c, 'ok') ?? 0) + GP_GO_BY_PLATFORM[c.meta.platform ?? 'linux'];
     return {...clamp(c, go - 1.5, GAMEPLAY_SECONDS), caption: 'Grand Prix, 12 karts. A small bot is at the controller.'};
   }
   if (c.name === 'timetrial') {
@@ -48,13 +50,16 @@ export const gameplayClip = (c: Capture): ClipWindow => {
 // Multiplayer: two clients of one race through the relay, recorded side by side: the lobby with
 // both names, then the start of the race. Cut by client A's marks (both logs carry the same
 // marks). Both names are in the roster about half a second after the lobby mark; the drivers press
-// accelerate at the go mark, about 2.5 s after the countdown's GO.
+// accelerate at the go mark, which comes after the countdown's GO by about 2.5 s on Linux and 3.6 s
+// on the Mac (the HUD timer). The race clip starts 2.1 s after GO on both.
+const MULTIPLAYER_GO_BEFORE_MARK = {linux: 2.5, darwin: 3.6};
 export const multiplayerClips = (a: Capture): ClipWindow[] => {
   const lobby = markerTime(a, 'lobby') ?? 0;
   const go = markerTime(a, 'go') ?? a.perf.raceStartSec ?? lobby + 90;
+  const raceFrom = go - MULTIPLAYER_GO_BEFORE_MARK[a.meta.platform ?? 'linux'] + 2.1;
   return [
     {...clamp(a, lobby + 0.6, 2.5), caption: 'Two browsers meet in a room through the relay.'},
-    {...clamp(a, go - 0.4, 6), caption: `One race, two ${browserName(a)} windows.`},
+    {...clamp(a, raceFrom, 6), caption: `One race, two ${browserName(a)} windows.`},
   ];
 };
 

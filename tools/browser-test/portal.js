@@ -5,16 +5,21 @@
 // releases the way Portal's own smoke test does: completeOnboarding(), then the gate's release.
 //
 // Environment (tools/video/capture.sh sets these for MKW_BROWSER=portal):
-//   MKW_CHROME       the browser executable (default /usr/bin/google-chrome)
+//   MKW_CHROME       the browser executable (default Google Chrome: /usr/bin/google-chrome, or the
+//                    app bundle's binary on macOS)
 //   MKW_PORTAL=1     the executable is Portal: open a debugging port and release onboarding
 //   CHROME_ARGS      extra switches (space separated), e.g. Portal's --portal-chrome* switches
-const executable = () => process.env.MKW_CHROME || '/usr/bin/google-chrome';
+const executable = () => process.env.MKW_CHROME || (process.platform === 'darwin'
+  ? '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' : '/usr/bin/google-chrome');
+// --enable-features for the game: WebGPU on Linux needs Vulkan; macOS has Metal and no Vulkan.
+const features = () => `--enable-features=${process.platform === 'linux' ? 'Vulkan,' : ''}WebAssemblyExperimentalJSPI`;
 const isPortal = () => process.env.MKW_PORTAL === '1';
 const port = () => 9340 + (Number(process.env.MKW_PORTAL_PORT_OFFSET) || 0); // read per launch
 const portalArgs = () => (isPortal() ? [`--remote-debugging-port=${port()}`] : []);
 
 // Chromium takes its X11 window class from CHROME_DESKTOP when a launcher set it; a fixed class
-// lets a recorder find the window (xdotool search --class mkw-capture).
+// lets a recorder find the window (xdotool search --class mkw-capture). (On macOS the recorder
+// finds the windows by the browser process on the driver's profile instead.)
 const launchEnv = (extra = {}) => {
   const env = { ...process.env, ...extra };
   delete env.CHROME_DESKTOP;
@@ -122,4 +127,4 @@ async function themeSpace(context, spec, say = () => {}) {
   }
 }
 
-module.exports = { executable, isPortal, portalArgs, launchEnv, releaseOnboarding, visiblePage, themeSpace };
+module.exports = { executable, features, isPortal, portalArgs, launchEnv, releaseOnboarding, visiblePage, themeSpace };

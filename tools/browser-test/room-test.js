@@ -28,7 +28,7 @@
 // (e.g. "d" moves the cursor one column right), so the two drivers can differ.
 //
 // For the demo video (tools/video/capture.sh multiplayer): MKW_WINDOW_A and MKW_WINDOW_B
-// ("WxH+X+Y") put the two clients in X11 windows of that size and place on one display, with no
+// ("WxH+X+Y") put the two clients in X11 windows (macOS: windows, in points) of that size and place on one display, with no
 // viewport emulation and no automation bar, and hide the page's controls panel once the game is
 // launched. The driver's marks (`[driver] mark <name>`: page, lobby, play, race-loaded, go, end)
 // and its epoch time go into both console logs, so the recording can be cut by them.
@@ -57,14 +57,15 @@ const bot = process.env.MKW_BOT === '1';
 const displays = { a: process.env.MKW_DISPLAY_A || process.env.DISPLAY, b: process.env.MKW_DISPLAY_B || process.env.DISPLAY };
 const windows = { a: process.env.MKW_WINDOW_A, b: process.env.MKW_WINDOW_B };
 const windowed = !!(windows.a && windows.b);
-const chromeArgs = ['--enable-unsafe-webgpu', '--enable-features=Vulkan,WebAssemblyExperimentalJSPI', '--ignore-gpu-blocklist',
+const chromeArgs = ['--enable-unsafe-webgpu', portal.features(), '--ignore-gpu-blocklist',
   '--autoplay-policy=no-user-gesture-required', '--window-size=1280,900',
   ...(process.env.CHROME_ARGS || '').split(/\s+/).filter(Boolean)];
 const windowArgs = (spec) => {
   const m = /^(\d+)x(\d+)\+(\d+)\+(\d+)$/.exec(spec || '');
   if (!m) return [];
   // --test-type keeps Chrome's "unsupported command-line flag" bar out of the recording.
-  return [`--window-size=${m[1]},${m[2]}`, `--window-position=${m[3]},${m[4]}`, '--ozone-platform=x11',
+  return [`--window-size=${m[1]},${m[2]}`, `--window-position=${m[3]},${m[4]}`,
+    ...(process.platform === 'linux' ? ['--ozone-platform=x11'] : []), // macOS: points on the main display
     '--hide-crash-restore-bubble', '--no-default-browser-check', '--test-type'];
 };
 const consoleLogs = [];
@@ -85,7 +86,9 @@ class Client {
   }
 
   async launch() {
-    this.profileDir = fs.mkdtempSync(path.join(os.tmpdir(), `mkw-room-${this.label}-`));
+    // /tmp, not macOS's long per-user temp folder: Portal's sidecar socket lives in the profile,
+    // and a Unix socket path is limited to 104 bytes there.
+    this.profileDir = fs.mkdtempSync(path.join(process.platform === 'darwin' ? '/tmp' : os.tmpdir(), `mkw-room-${this.label}-`));
     // Two Portal instances need two debugging ports (portal.js: MKW_PORTAL_PORT_OFFSET).
     process.env.MKW_PORTAL_PORT_OFFSET = this.label === 'a' ? '0' : '1';
     this.context = await chromium.launchPersistentContext(this.profileDir, {

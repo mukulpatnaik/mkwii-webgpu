@@ -22,6 +22,19 @@ recorded). Nothing else may use the GPU display at the same time: the script tak
 `/tmp/mkw-chrome.lock` like the other browser tests. The Chrome window appears on your desktop for
 the length of the route; leave it alone while it records.
 
+**On a Mac** the same script records with the Mac's tools: ffmpeg (Homebrew) with avfoundation
+and `h264_videotoolbox`, no `xdotool` or X display. The browser windows are placed with
+`--window-position`/`--window-size` in the main display's visible frame (below the menu bar,
+beside the Dock; `tools/video/mac-windows.js`), and one recording of the whole screen, 60 fps
+without the cursor, is cropped to each window in physical pixels (two per point on Retina). So
+nothing may cover the windows while they record, and the terminal needs Screen Recording
+permission (System Settings > Privacy & Security). avfoundation stamps frames on the host clock,
+which gives `ffmpegStartEpochMs` to the frame. It does not finish an mp4 on a signal, so it
+records a fragmented mp4 that the script remuxes into `capture.mp4` (losing the last partial
+second, after the route's end). The lock is a `shlock` pid file (`/tmp/mkw-chrome.pid`) and the time
+limit a shell timer. `meta.json` records `"platform": "darwin"` (GO comes 0.3 s sooner after the
+course loads than on Linux; `src/timeline.ts`) and the window in pixels with its `scale`.
+
 ```bash
 tools/video/capture.sh boot     # page load, Start, shader compile, title screen, opening movie (~45 s)
 tools/video/capture.sh gp         # the same, then a 50cc Grand Prix race driven by the bot (~2.5 min)
@@ -63,7 +76,9 @@ override the paths) with Portal's own chrome around the page, on a fresh profile
 onboarding the drivers release through Portal's probe bridge. The build, the repo's vendored
 mojom bindings and the `dist-portal` bundle have to agree (Portal's `02-build.sh`,
 `export-mojom-bindings.sh`, then `vite build --config src/chrome/vite.config.ts`); a white
-window or a "portal.mojom hash mismatch" page means they do not. The packaged `portal-browser`
+window or a "portal.mojom hash mismatch" page means they do not (when the build and the vendored
+bindings agree, only the bundle needs rebuilding). On a Mac the binary is
+`out/Default/Chromium.app/Contents/MacOS/Chromium`. The packaged `portal-browser`
 cannot be driven: it drops the debugging port. `meta.json` records the browser, and the title
 captions name it.
 
@@ -71,7 +86,7 @@ Each run writes `video/public/captures/<name>/` (multiplayer: `<name>/a/` and `<
 
 | File | What |
 |---|---|
-| `capture.mp4` | the Chrome window, 60 fps H.264 (NVENC when there is an NVIDIA GPU, else libx264) |
+| `capture.mp4` | the Chrome window, 60 fps H.264 (NVENC when there is an NVIDIA GPU, VideoToolbox on a Mac, else libx264) |
 | `console.log` | the page's console, with the driver's marks (`[driver] mark …`) |
 | `meta.json` | window geometry, ffmpeg's start time, length |
 | `perf.json` | from `scripts/perf-to-json.mjs`: every `[web-perf] fps=` sample and every mark, on the video's clock |

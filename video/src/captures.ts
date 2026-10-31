@@ -21,6 +21,7 @@ export type Perf = {
 export type Meta = {
   name: string;
   browser?: 'chrome' | 'portal';
+  platform?: 'linux' | 'darwin'; // where it was recorded (capture.sh); captures from before it are Linux
   durationSec: number;
   fps: number;
   window: {x: number; y: number; width: number; height: number};
