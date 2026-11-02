@@ -79,15 +79,16 @@ const Pill: React.FC<{children: React.ReactNode; kind: 'blue' | 'yellow'; size?:
 
 export const TitleCard: React.FC<{durationInFrames: number}> = ({durationInFrames}) => {
   const {fps} = useVideoConfig();
-  const beat = Math.round(fps * 0.3);
+  // A short card (the race should start within three seconds): both lines come in with the fade.
+  const beat = Math.round(fps * 0.2);
   return (
     <Fade durationInFrames={durationInFrames} background={theme.ground}>
       <AbsoluteFill style={ground}>
         <Tile>
-          <Reveal at={FADE_FRAMES}>
+          <Reveal at={4}>
             <div style={{fontSize: 128, fontWeight: 900, lineHeight: 1.05, letterSpacing: '-0.01em'}}>Mario Kart Wii.</div>
           </Reveal>
-          <Reveal at={FADE_FRAMES + beat}>
+          <Reveal at={4 + beat}>
             <Pill kind="blue">In the browser via WebGPU.</Pill>
           </Reveal>
         </Tile>

@@ -6,14 +6,12 @@ import {staticFile} from 'remotion';
 
 export type PerfSample = {t: number; fps: number; frames: number};
 export type Marker = {t: number; name: string};
-export type Event = {t: number; text: string};
 export type Perf = {
   capture: string;
   durationSec: number;
   offsetSec: number;
   samples: PerfSample[];
   markers: Marker[];
-  events?: Event[];
   raceStartSec: number | null;
   fpsMin: number | null;
   fpsMedian: number | null;

@@ -6,12 +6,12 @@
 // console.log lines are `[seconds since the driver started] [type] text`. The first line gives the
 // driver's epoch time and meta.json gives ffmpeg's, so every console time becomes a time in
 // capture.mp4. Collected: every `[web-perf] fps=` sample (the page's own 3-second average),
-// the driver's marks (`[driver] mark <name>`, the Start click, page loads), the room and relay
-// `[vnet]` lines of online play (the relay connection) as events, and the first
-// `[web-pace] race steps/s` line at race pace, as a fallback race start. Two marks come from the
+// the driver's marks (`[driver] mark <name>`, the Start click, page loads), and the first
+// `[web-pace] race steps/s` line at race pace, as a fallback race start. Three marks come from the
 // game's own console lines, since no route command can know when they happen: `title-loaded`
-// (the disc read of Scene/UI/Title.szs, right before the title screen) and `race-loaded` (the
-// first `[web-warm] course file` line, when a race's course is loaded).
+// (the disc read of Scene/UI/Title.szs, right before the title screen), `race-loaded` (the
+// first `[web-warm] course file` line, when a race's course is loaded), and online `matched` (the
+// room's first `[room-launch] create section=58` line: the race-preparation scene after matchmaking).
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -25,7 +25,7 @@ if (!t0) { console.error('console.log does not start with the driver t0 line'); 
 const offset = (t0 - meta.ffmpegStartEpochMs) / 1000; // console time + offset = video time
 const toVideo = (s) => Math.round((Number(s) + offset) * 1000) / 1000;
 
-const samples = [], markers = [], events = [];
+const samples = [], markers = [];
 let raceStart = null;
 for (const line of lines) {
   const m = line.match(/^\[\s*([\d.]+)\] \[(\w+)\] (.*)$/);
@@ -46,12 +46,11 @@ for (const line of lines) {
     markers.push({ t: toVideo(t), name: 'title-loaded' });
   } else if (text.startsWith('[web-warm] course file') && !markers.some((k) => k.name === 'race-loaded')) {
     markers.push({ t: toVideo(t), name: 'race-loaded' });
+  } else if (text.startsWith('[room-launch] create section=58') && !markers.some((k) => k.name === 'matched')) {
+    // Online play: the race-preparation scene, right after "Your opponents have been chosen!".
+    markers.push({ t: toVideo(t), name: 'matched' });
   } else if (raceStart === null && (f = text.match(/^\[web-pace\] race steps\/s=([\d.]+)/)) && Number(f[1]) >= 30) {
     raceStart = toVideo(t) - 3; // the line sums the previous three seconds
-  }
-  // Online play: the relay lines, for a ticker over the footage (text as printed).
-  if (/^\[vnet\]/.test(text)) {
-    events.push({ t: toVideo(t), text: text.replace(/\s+/g, ' ').slice(0, 120) });
   }
 }
 const perf = {
@@ -60,7 +59,6 @@ const perf = {
   offsetSec: offset,
   samples,
   markers,
-  events,
   raceStartSec: raceStart,
   fpsMin: samples.length ? Math.min(...samples.map((s) => s.fps)) : null,
   fpsMedian: samples.length ? [...samples.map((s) => s.fps)].sort((a, b) => a - b)[samples.length >> 1] : null,

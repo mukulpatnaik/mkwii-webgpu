@@ -64,6 +64,7 @@ const traceCategories = (process.env.TRACE_CATEGORIES ||
     await portal.releaseOnboarding(say);
     await portal.themeSpace(browser, process.env.MKW_SPACE_THEME, say);
     page = await portal.visiblePage(browser, say);
+    page = await portal.openBackgroundTabs(browser, page, (process.env.MKW_EXTRA_TABS || '').split(/\s+/).filter(Boolean), say);
   } else {
     browser = await chromium.launch(launchOptions);
     say(`${portal.executable()} args: ${extraArgs.join(' ') || '(none extra)'}`);

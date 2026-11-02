@@ -2,10 +2,11 @@
 
 A short, plain demo of the game running in a browser (Chrome, or Portal), assembled with
 [Remotion](https://www.remotion.dev) from recordings of the real thing: a browser window on this
-machine, driven by the browser-test scripts, recorded with ffmpeg. About 26 s at 1080p60, with
-Wii Menu styled cards: a title card, the title screen, the start of a Grand Prix race with the HUD
-and the page's own frame-rate readings, two browser windows in one online race (about 13 s in), and a
-closing card.
+machine, driven by the browser-test scripts, recorded with ffmpeg. About 27 s at 1080p60, with
+Wii Menu styled cards: a short title card, a second of the title screen, the start of a Grand Prix
+race (GO about 3 s in) with the HUD and the page's own frame-rate readings, two browser windows
+meeting in a room, finding each other in the game's matchmaking and racing (from about 10 s in),
+and a closing card.
 
 **Captures and renders show the game and never go into git.** `video/public/captures/` and
 `video/out/` are gitignored (`.gitignore` at the repository root); keep it that way, and check
@@ -73,7 +74,8 @@ rather than on time since Start, and takes a screenshot after each D-pad press t
 **Portal instead of Chrome.** `MKW_BROWSER=portal` records the Portal dev build (`~/code/browser`
 on `~/code/portal-chromium`; `PORTAL_BROWSER_REPO`, `PORTAL_CHROMIUM_ROOT` and `PORTAL_EXE`
 override the paths) with Portal's own chrome around the page, on a fresh profile whose
-onboarding the drivers release through Portal's probe bridge. The build, the repo's vendored
+onboarding the drivers release through Portal's probe bridge (they also answer its "Make Portal
+your default browser?" toast "Don't ask again" on the toast overlay; `portal.js`). The build, the repo's vendored
 mojom bindings and the `dist-portal` bundle have to agree (Portal's `02-build.sh`,
 `export-mojom-bindings.sh`, then `vite build --config src/chrome/vite.config.ts`); a white
 window or a "portal.mojom hash mismatch" page means they do not (when the build and the vendored
@@ -126,11 +128,11 @@ fork's room fixes (`athena-web-ntsc` at 7b68518 or later; a staging from before 
 "Your saved profile needs attention"), so point `MKW_SITE` at a current staging, for example
 `MKW_SITE=work/sites/relay-test/public`. Each window is recorded on its own:
 `video/public/captures/multiplayer/a/` and `/b/` hold a `capture.mp4`, `console.log`,
-`meta.json` and `perf.json` each, with the same marks in both (`lobby`, `play`, `race-loaded`,
-`go`, `end`). `perf.json` also carries the `[vnet]` and `[room-launch]` console lines as
-`events`; the segment shows each client's latest one over its half of the picture. The
-`Multiplayer` composition plays the lobby (both names in the roster) and then the start of the
-race from both windows; with no capture it shows a placeholder card instead.
+`meta.json` and `perf.json` each, with the same marks in both (`lobby`, `play`, `matched`, `race-loaded`,
+`go`, `end`). The
+`Multiplayer` composition plays the lobby (both names in the roster), the game's Worldwide VS
+search up to "Your opponents have been chosen!" (cut by the `matched` mark, the race-preparation
+scene) and then the start of the race from both windows; with no capture it shows a placeholder card instead.
 
 ## 2. Preview and render
 
@@ -141,7 +143,7 @@ npx remotion render Main out/demo.mp4     # 1080p60 H.264 to video/out/ (gitigno
 ```
 
 The compositions read the captures when opened or rendered and take their lengths from the marks,
-so `Main` is about 26 s with the four captures and placeholders where a capture is missing. Frames
+so `Main` is about 27 s with the four captures and placeholders where a capture is missing. Frames
 are rendered by the installed Google Chrome (`REMOTION_BROWSER` points at another browser;
 `REMOTION_BROWSER=` empty lets Remotion download its own headless shell). The typeface, Nunito,
 comes from Google Fonts at render time, so rendering needs network access for that one request.

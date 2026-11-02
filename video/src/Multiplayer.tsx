@@ -1,5 +1,5 @@
 import React from 'react';
-import {AbsoluteFill, OffthreadVideo, Series, useCurrentFrame, useVideoConfig} from 'remotion';
+import {AbsoluteFill, OffthreadVideo, Series} from 'remotion';
 import {Capture} from './captures';
 import {Caption, Fade, PlaceholderCard} from './Cards';
 import {FpsOverlay} from './FpsOverlay';
@@ -11,50 +11,25 @@ export type MultiplayerProps = {a: Capture | null; b: Capture | null};
 export const multiplayerFrames = (p: MultiplayerProps) =>
   p.a && p.b ? multiplayerClips(p.a).reduce((n, w) => n + frames(w.length), 0) : frames(CARD_SECONDS.placeholder);
 
-// The latest room/relay console line of a client at this moment of the clip, as printed.
-const EventLine: React.FC<{capture: Capture; clipStartSec: number}> = ({capture, clipStartSec}) => {
-  const frame = useCurrentFrame();
-  const {fps} = useVideoConfig();
-  const t = clipStartSec + frame / fps;
-  let text = '';
-  for (const e of capture.perf.events ?? []) {
-    if (e.t <= t) text = e.text;
-    else break;
-  }
-  if (!text) return null;
-  return (
-    <div
-      style={{
-        position: 'absolute',
-        left: 24,
-        right: 24,
-        top: 24,
-        fontFamily: theme.fontFamily,
-        fontSize: 22,
-        fontWeight: 700,
-        color: theme.overlayMuted,
-        backgroundColor: theme.overlayBg,
-        padding: '8px 14px',
-        borderRadius: 999,
-        whiteSpace: 'nowrap',
-        overflow: 'hidden',
-        textOverflow: 'ellipsis',
-      }}
-    >
-      {text}
-    </div>
-  );
-};
-
-// One window of the two recordings, side by side; each half carries its own fps reading and the
-// console line that shows where it stands with the room.
+// One window of the two recordings, side by side; each half carries its own fps reading. Each window keeps its own shape (taller
+// than half the frame on most screens), and the two meet in the middle with a small gap, so what
+// letterboxing there is goes to the frame's outer edges.
+const GAP = 16;
 const Pair: React.FC<{a: Capture; b: Capture; window: ClipWindow}> = ({a, b, window}) => {
   const length = frames(window.length);
   return (
     <Fade durationInFrames={length}>
-      <AbsoluteFill style={{backgroundColor: theme.letterbox, flexDirection: 'row'}}>
-        {[a, b].map((c) => (
-          <div key={c.name} style={{position: 'relative', width: '50%', height: '100%'}}>
+      <AbsoluteFill style={{backgroundColor: theme.letterbox, flexDirection: 'row', justifyContent: 'center', gap: GAP}}>
+        {[a, b].map((c, i) => (
+          <div
+            key={i}
+            style={{
+              position: 'relative',
+              height: '100%',
+              aspectRatio: `${c.meta.window.width} / ${c.meta.window.height}`,
+              maxWidth: `calc(50% - ${GAP / 2}px)`,
+            }}
+          >
             <OffthreadVideo
               src={c.src}
               trimBefore={frames(window.from)}
@@ -62,7 +37,6 @@ const Pair: React.FC<{a: Capture; b: Capture; window: ClipWindow}> = ({a, b, win
               muted
               style={{width: '100%', height: '100%', objectFit: 'contain'}}
             />
-            <EventLine capture={c} clipStartSec={window.from} />
             <FpsOverlay perf={c.perf} clipStartSec={window.from} compact />
           </div>
         ))}

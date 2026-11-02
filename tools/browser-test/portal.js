@@ -28,11 +28,12 @@ const launchEnv = (extra = {}) => {
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-// Runs `expression` on the root chrome page (chrome://portal/) over the debugging port.
-async function evalOnRoot(expression) {
-  const targets = await (await fetch(`http://127.0.0.1:${port()}/json`)).json();
-  const root = targets.find((t) => t.url === 'chrome://portal/');
-  if (!root) throw new Error('no chrome://portal/ target (is this a Portal build with --portal-chrome?)');
+// Runs `expression` on the root chrome page (chrome://portal/), or another of Portal's chrome
+// surfaces, over the debugging port.
+async function evalOnRoot(expression, url = 'chrome://portal/', debugPort = port()) {
+  const targets = await (await fetch(`http://127.0.0.1:${debugPort}/json`)).json();
+  const root = targets.find((t) => t.url === url);
+  if (!root) throw new Error(`no ${url} target (is this a Portal build with --portal-chrome?)`);
   const ws = new WebSocket(root.webSocketDebuggerUrl);
   await new Promise((resolve, reject) => { ws.onopen = resolve; ws.onerror = () => reject(new Error('CDP socket failed')); });
   const result = await new Promise((resolve, reject) => {
@@ -66,7 +67,34 @@ async function releaseOnboarding(say = () => {}) {
     }
   }
   say('portal: onboarding released');
+  declineDefaultBrowserPrompt(say);
   await sleep(1000);
+}
+
+// A fresh profile can get Portal's "Make Portal your default browser?" toast right after
+// onboarding, and it stays up for a minute. Portal creates the toast overlay page with its first
+// toast, so this waits in the background (for up to two minutes) for that page and answers the
+// prompt "Don't ask again" there with the button's own click, so the root records it like a
+// person's; a mutation observer on the page answers any later one before it is drawn.
+function declineDefaultBrowserPrompt(say = () => {}) {
+  const overlay = 'chrome://portal/overlay.html?slot=toast';
+  const install = `(() => {
+    if (window.__mkwDeclineDefault) return 'already';
+    const decline = () => {
+      for (const b of document.querySelectorAll('button')) if (/^Don.t ask again$/.test(b.textContent.trim())) b.click();
+    };
+    window.__mkwDeclineDefault = new MutationObserver(decline);
+    window.__mkwDeclineDefault.observe(document.documentElement, { childList: true, subtree: true });
+    decline();
+    return 'installed';
+  })()`;
+  const deadline = Date.now() + 120000, debugPort = port(); // room-test.js moves the port for the next client
+  const poll = async () => {
+    const done = await evalOnRoot(install, overlay, debugPort).catch(() => null);
+    if (done) say(`portal: default-browser prompt answered on the toast overlay (${done})`);
+    else if (Date.now() < deadline) setTimeout(poll, 250).unref();
+  };
+  void poll();
 }
 
 // Portal keeps the window's tabs itself: the context's first page (about:blank) is detached and
@@ -83,6 +111,40 @@ async function visiblePage(context, say = () => {}) {
     if (Date.now() > deadline) throw new Error(`no visible page in Portal; pages: ${context.pages().map((p) => p.url()).join(', ')}`);
     await sleep(300);
   }
+}
+
+// Opens `urls` as tabs ahead of the one the driver uses, which stays in front. The probe bridge
+// places a new tab after the active one or at the end and cannot move a tab, so the tabs are
+// opened at the end, then a fresh tab after them for the driver, and the first tab is closed.
+// Returns the page to drive. MKW_EXTRA_TABS (space separated) for pace-drive.js; Portal only.
+async function openBackgroundTabs(context, page, urls, say = () => {}) {
+  if (!isPortal() || !urls.length) return page;
+  const first = await evalOnRoot('window.__spikeBridge.getTabs().find((t) => t.active)?.id');
+  for (const url of [...urls, 'about:blank']) {
+    await evalOnRoot(`window.__spikeBridge.createTab(${JSON.stringify(url)}, undefined, 'end')`);
+    await sleep(700);
+  }
+  await evalOnRoot(`window.__spikeBridge.closeTab(${first})`);
+  const deadline = Date.now() + 10000;
+  while (!page.isClosed()) {
+    if (Date.now() > deadline) throw new Error('the first tab did not close');
+    await sleep(200);
+  }
+  // The new tab is the visible about:blank page (the context's own first page is an about:blank
+  // with no size; a tab just put behind can still report itself visible for a moment).
+  let driven = null;
+  while (!driven) {
+    for (const p of context.pages()) {
+      if (p.url() !== 'about:blank') continue;
+      const width = await p.evaluate(() => (document.visibilityState === 'visible' ? window.innerWidth : 0)).catch(() => 0);
+      if (width > 0) driven = p;
+    }
+    if (Date.now() > deadline) throw new Error('no visible new tab to drive');
+    if (!driven) await sleep(200);
+  }
+  const strip = await evalOnRoot('window.__spikeBridge.getTabs().map((t) => t.url).join(" ")');
+  say(`portal: opened ${urls.length} tab(s) ahead of the driven one; strip: ${strip}`);
+  return driven;
 }
 
 // Themes the profile's default space the way Portal's hero-shot script does (~/code/browser
@@ -127,4 +189,4 @@ async function themeSpace(context, spec, say = () => {}) {
   }
 }
 
-module.exports = { executable, features, isPortal, portalArgs, launchEnv, releaseOnboarding, visiblePage, themeSpace };
+module.exports = { executable, features, isPortal, portalArgs, launchEnv, releaseOnboarding, visiblePage, openBackgroundTabs, themeSpace };

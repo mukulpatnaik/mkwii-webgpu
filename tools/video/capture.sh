@@ -41,7 +41,9 @@
 # character screen; B defaults to "d", one column right of Mario, so the two drivers differ).
 # MKW_BROWSER=portal records the Portal dev build (~/code/browser on ~/code/portal-chromium:
 # PORTAL_BROWSER_REPO and PORTAL_CHROMIUM_ROOT override those paths, PORTAL_EXE the binary) with
-# Portal's own chrome instead of Google Chrome; MKW_BROWSER=chrome is the default.
+# Portal's own chrome instead of Google Chrome; MKW_BROWSER=chrome is the default. In Portal the
+# single-window routes also open MKW_EXTRA_TABS (space separated URLs; default portal.so and
+# x.com/mukul0x, empty for none) as background tabs ahead of the game's tab.
 # tools/browser-test/portal.js says how the drivers handle it.
 set -euo pipefail
 cd "$(dirname "$0")/../.."
@@ -65,7 +67,7 @@ case "$browser" in
     # The same switches as $repo/scripts/chromium/03-run.sh, minus its --enable-features (ours
     # carries Vulkan and JSPI; a second --enable-features would replace it).
     portal_args="--portal-chrome --portal-chrome-dir=$repo/dist-portal --portal-sidecar-exe=$bun_exe --portal-sidecar-script=$repo/src/sidecar/index.ts --disable-features=HttpsFirstModeV2ForTypicallySecureUsers,TreesInViz"
-    browser_env=(MKW_CHROME="$exe" MKW_PORTAL=1)
+    browser_env=(MKW_CHROME="$exe" MKW_PORTAL=1 MKW_EXTRA_TABS="${MKW_EXTRA_TABS-https://www.portal.so/ https://x.com/mukul0x}")
     ;;
   *) echo "MKW_BROWSER must be chrome or portal" >&2; exit 1 ;;
 esac
