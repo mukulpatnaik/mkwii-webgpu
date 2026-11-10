@@ -2,7 +2,7 @@ import React from 'react';
 import {Composition} from 'remotion';
 import {Boot, bootFrames, SegmentProps} from './Boot';
 import {Capture, loadCapture} from './captures';
-import {Gameplay, gameplayFrames} from './Gameplay';
+import {Gameplay, gameplayFrames, GameplayProps} from './Gameplay';
 import {Main, mainFrames, MainProps} from './Main';
 import {Multiplayer, multiplayerFrames, MultiplayerProps} from './Multiplayer';
 import {FPS, HEIGHT, WIDTH} from './timeline';
@@ -17,10 +17,20 @@ const segment = (load: () => Promise<Capture | null>, length: (c: Capture | null
   },
 });
 
-// The gameplay segment: the Grand Prix driven by the bot, else the Time Trial on the
-// staff ghost's inputs, else the scripted Grand Prix drive.
-const loadGameplay = async () =>
-  (await loadCapture('gp')) ?? (await loadCapture('timetrial')) ?? loadCapture('race');
+// The gameplay segment: the Grand Prix driven by the bot (else the Time Trial on the staff
+// ghost's inputs, else the scripted Grand Prix drive), then the bot's VS races on other courses.
+const loadGameplay = async (): Promise<Capture[]> => {
+  const first = (await loadCapture('gp')) ?? (await loadCapture('timetrial')) ?? (await loadCapture('race'));
+  const more = await Promise.all([loadCapture('coconut-mall'), loadCapture('mushroom-gorge')]);
+  return [first, ...more].filter((c): c is Capture => c !== null);
+};
+const gameplaySegment = {
+  defaultProps: {captures: []} as GameplayProps,
+  calculateMetadata: async () => {
+    const captures = await loadGameplay();
+    return {props: {captures}, durationInFrames: gameplayFrames(captures)};
+  },
+};
 
 export const Root: React.FC = () => (
   <>
@@ -31,7 +41,7 @@ export const Root: React.FC = () => (
       width={WIDTH}
       height={HEIGHT}
       durationInFrames={FPS * 60}
-      defaultProps={{boot: null, gameplay: null, multiplayer: {a: null, b: null}} as MainProps}
+      defaultProps={{boot: null, gameplay: [], multiplayer: {a: null, b: null}} as MainProps}
       calculateMetadata={async () => {
         const [boot, gameplay, a, b] = await Promise.all([
           loadCapture('boot'), loadGameplay(), loadCapture('multiplayer/a'), loadCapture('multiplayer/b'),
@@ -41,7 +51,7 @@ export const Root: React.FC = () => (
       }}
     />
     <Composition id="Boot" component={Boot} fps={FPS} width={WIDTH} height={HEIGHT} durationInFrames={FPS * 10} {...segment(() => loadCapture('boot'), bootFrames)} />
-    <Composition id="Gameplay" component={Gameplay} fps={FPS} width={WIDTH} height={HEIGHT} durationInFrames={FPS * 10} {...segment(loadGameplay, gameplayFrames)} />
+    <Composition id="Gameplay" component={Gameplay} fps={FPS} width={WIDTH} height={HEIGHT} durationInFrames={FPS * 10} {...gameplaySegment} />
     <Composition
       id="Multiplayer"
       component={Multiplayer}

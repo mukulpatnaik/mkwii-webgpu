@@ -1,0 +1,15 @@
+# Demo capture "mushroom-gorge" (tools/video/capture.sh mushroom-gorge): a 100cc VS race on
+# Mushroom Gorge driven by the bot. demo-vs-start.cmds reaches the Courses screen on the Mushroom
+# Cup; Mushroom Gorge is third in its list (see demo-vs-coconut-mall.cmds for the check).
+script tools/browser-test/routes/demo-vs-start.cmds
+click 500 430
+wait 4500
+key ArrowDown 150
+wait 1500
+key ArrowDown 150
+wait 1500
+shot course
+click 500 430
+waitlog 10 course 2 \(kinoko_course\) chosen
+wait 4500
+script tools/browser-test/routes/demo-vs-race.cmds

@@ -8,9 +8,9 @@ import {Multiplayer, multiplayerFrames, MultiplayerProps} from './Multiplayer';
 import {theme} from './theme';
 import {CARD_SECONDS, frames} from './timeline';
 
-export type MainProps = {boot: Capture | null; gameplay: Capture | null; multiplayer: MultiplayerProps};
+export type MainProps = {boot: Capture | null; gameplay: Capture[]; multiplayer: MultiplayerProps};
 
-// The demo, in order (title, intro, race, online play, closing); each entry's length in frames.
+// The demo, in order (title, intro, races, online play, closing); each entry's length in frames.
 export const mainSegments = (p: MainProps) => [
   {id: 'title', frames: frames(CARD_SECONDS.title)},
   {id: 'intro', frames: bootFrames(p.boot)},
@@ -32,7 +32,7 @@ export const Main: React.FC<MainProps> = (props) => {
           <Boot capture={props.boot} />
         </Series.Sequence>
         <Series.Sequence durationInFrames={seg.gameplay}>
-          <Gameplay capture={props.gameplay} />
+          <Gameplay captures={props.gameplay} />
         </Series.Sequence>
         <Series.Sequence durationInFrames={seg.multiplayer}>
           <Multiplayer a={props.multiplayer.a} b={props.multiplayer.b} />

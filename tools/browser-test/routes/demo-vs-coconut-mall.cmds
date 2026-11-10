@@ -1,0 +1,17 @@
+# Demo capture "coconut-mall" (tools/video/capture.sh coconut-mall): a 100cc VS race on Coconut
+# Mall (12 karts, items) driven by the bot. demo-vs-start.cmds reaches the Courses screen on the
+# Mushroom Cup; the Flower Cup is one to the right, Coconut Mall second in its list. When A picks
+# the course the page logs `[web-warm] course 5 (shopping_course) chosen` (it prefetches the
+# file), which the route waits for: a wrong pick shows in driver.log as a waitlog timeout.
+script tools/browser-test/routes/demo-vs-start.cmds
+key ArrowRight 150
+wait 1500
+click 500 430
+wait 4500
+key ArrowDown 150
+wait 1500
+shot course
+click 500 430
+waitlog 10 course 5 \(shopping_course\) chosen
+wait 4500
+script tools/browser-test/routes/demo-vs-race.cmds

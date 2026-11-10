@@ -2,11 +2,10 @@
 
 A short, plain demo of the game running in a browser (Chrome, or Portal), assembled with
 [Remotion](https://www.remotion.dev) from recordings of the real thing: a browser window on this
-machine, driven by the browser-test scripts, recorded with ffmpeg. About 27 s at 1080p60, with
+machine, driven by the browser-test scripts, recorded with ffmpeg. About 31 s at 1080p60, with
 Wii Menu styled cards: a short title card, a second of the title screen, the start of a Grand Prix
-race (GO about 3 s in) with the HUD and the page's own frame-rate readings, two browser windows
-meeting in a room, finding each other in the game's matchmaking and racing (from about 10 s in),
-and a closing card.
+race (GO about 3 s in) and a moment from the middle of two VS races on other courses, two browser windows meeting in a
+room, finding each other in the game's matchmaking and racing, and a closing card.
 
 **Captures and renders show the game and never go into git.** `video/public/captures/` and
 `video/out/` are gitignored (`.gitignore` at the repository root); keep it that way, and check
@@ -34,23 +33,45 @@ which gives `ffmpegStartEpochMs` to the frame. It does not finish an mp4 on a si
 records a fragmented mp4 that the script remuxes into `capture.mp4` (losing the last partial
 second, after the route's end). The lock is a `shlock` pid file (`/tmp/mkw-chrome.pid`) and the time
 limit a shell timer. `meta.json` records `"platform": "darwin"` (GO comes 0.3 s sooner after the
-course loads than on Linux; `src/timeline.ts`) and the window in pixels with its `scale`.
+course loads than on Linux; `src/timeline.ts`) and the window in pixels with its `scale`. macOS
+rounds every window's corners, so the crop holds a little desktop there; the compositions mask
+the corner (`src/Clip.tsx`).
 
 ```bash
 tools/video/capture.sh boot     # page load, Start, shader compile, title screen, opening movie (~45 s)
 tools/video/capture.sh gp         # the same, then a 50cc Grand Prix race driven by the bot (~2.5 min)
+tools/video/capture.sh coconut-mall    # the same, then a 100cc VS race on Coconut Mall, the bot driving (~2.5 min)
+tools/video/capture.sh mushroom-gorge  # ... on Mushroom Gorge
 tools/video/capture.sh timetrial  # the same, then a Time Trial on the staff ghost's inputs   (~3 min)
 tools/video/capture.sh race     # the same, then a 50cc Grand Prix race driven by the script   (~4 min)
 ```
 
-The demo's gameplay segment uses `gp` when there is one: the first race of a 50cc Grand Prix
+**The window is 16:9**, like the video: the work area cut to that shape at its top (`MKW_ASPECT`,
+default `16:9`; `none` for the whole work area, which is taller and gets pillarboxed), so the
+browser fills the frame.
+
+**The first run after a browser rebuild is slow.** The page prewarms its 1706 bundled pipelines
+right after Start, in about 4 s when macOS's Metal shader cache knows the binary and about a
+minute when it does not (a rebuilt Chromium, or a browser that has never run the page): the
+game ignores the route's presses meanwhile, so that capture is lost. Run `boot` once first and
+check `Pipeline prewarm finished` in its `console.log`; the next runs are fast.
+
+The demo's gameplay segment starts with `gp` when there is one: the first race of a 50cc Grand Prix
 (Luigi Circuit, 12 karts, items) driven by a small bot, `tools/browser-test/kart-bot.js`. It plays
 like a person at a controller: every frame it reads the kart's position and heading and the
 course's CPU route from the game's memory, steers towards a route point a little ahead, holds
 accelerate and fires whatever item it has every few seconds, all through a fake gamepad on port 1.
 The game sees an ordinary player, so the race keeps the chase camera, the HUD and normal online
 play. (Marking the player's kart as a CPU instead gave the game's spectator camera, and online the
-host's kart never moved.)
+host's kart never moved.) The bot logs its first racing frame (`[bot] go`), which `perf.json`
+keeps as the `bot-go` mark: GO itself, where each race clip is cut.
+
+`coconut-mall` and `mushroom-gorge` follow as two more race clips: 100cc VS races the bot drives
+on those courses (`routes/demo-vs-*.cmds`: Single Player, VS, Solo Race, then the Courses screen,
+where the cup grid and each cup's list are walked with the arrow keys; when A picks the course
+the page logs `[web-warm] course 5 (shopping_course) chosen`, which the route waits for). The
+seeded save has four cups unlocked (Mushroom, Flower, Shell, Banana), which is what a VS race
+can pick from.
 
 Without `gp` it uses `timetrial`: a Time Trial on Luigi Circuit whose player kart is
 driven by the disc's staff ghost's recorded inputs, a TAS that needs no special build. The route
@@ -81,8 +102,7 @@ mojom bindings and the `dist-portal` bundle have to agree (Portal's `02-build.sh
 window or a "portal.mojom hash mismatch" page means they do not (when the build and the vendored
 bindings agree, only the bundle needs rebuilding). On a Mac the binary is
 `out/Default/Chromium.app/Contents/MacOS/Chromium`. The packaged `portal-browser`
-cannot be driven: it drops the debugging port. `meta.json` records the browser, and the title
-captions name it.
+cannot be driven: it drops the debugging port. `meta.json` records the browser.
 
 Each run writes `video/public/captures/<name>/` (multiplayer: `<name>/a/` and `<name>/b/`):
 
@@ -100,10 +120,10 @@ Each run writes `video/public/captures/<name>/` (multiplayer: `<name>/a/` and `<
 `mark <name>` lines become cut points the compositions can use. `MKW_SITE`, `MKW_PORT` and
 `MKW_DISC` (a disc image for a site without a game folder) are honoured, as in the browser tests.
 
-The fps overlay in the video is driven by the page's own `[web-perf] fps=` console lines, three
-seconds apart, matched to the recording by the driver's and ffmpeg's start times (within a few
-hundred milliseconds). Nothing in the overlay is typed in by hand. To regenerate `perf.json`
-after editing the script:
+`perf.json` also carries the page's own `[web-perf] fps=` console lines, three seconds apart,
+matched to the recording by the driver's and ffmpeg's start times (within a few hundred
+milliseconds); the video no longer shows them, but they are there to read. To regenerate
+`perf.json` after editing the script:
 
 ```bash
 node video/scripts/perf-to-json.mjs video/public/captures/race
@@ -129,7 +149,11 @@ fork's room fixes (`athena-web-ntsc` at 7b68518 or later; a staging from before 
 `MKW_SITE=work/sites/relay-test/public`. Each window is recorded on its own:
 `video/public/captures/multiplayer/a/` and `/b/` hold a `capture.mp4`, `console.log`,
 `meta.json` and `perf.json` each, with the same marks in both (`lobby`, `play`, `matched`, `race-loaded`,
-`go`, `end`). The
+`go`, `end`; `bot-go`, the bot's own GO, when it drove). Both clients vote with `MKW_COURSE_KEYS`
+(default three right and three down: the Special Cup's fourth course, Rainbow Road), pressed
+before each A once the players are matched; the page logs the course A picks (`course 13
+(rainbow_course) chosen`), and the driver log says what each client voted for and which course
+loaded. The
 `Multiplayer` composition plays the lobby (both names in the roster), the game's Worldwide VS
 search up to "Your opponents have been chosen!" (cut by the `matched` mark, the race-preparation
 scene) and then the start of the race from both windows; with no capture it shows a placeholder card instead.
@@ -155,10 +179,10 @@ Versions are pinned exactly in `package.json` (Remotion 4.0.539, React 19.3.1).
 | Path | What |
 |---|---|
 | `src/Root.tsx` | the compositions and how each loads its capture |
-| `src/Main.tsx` | the demo's order: title, intro (boot), gameplay (gp, else timetrial, else race), multiplayer, closing |
+| `src/Main.tsx` | the demo's order: title, intro (boot), gameplay (gp, else timetrial, else race; then coconut-mall and mushroom-gorge), multiplayer, closing |
 | `src/timeline.ts` | where each clip cuts into the captures (seconds, from the marks) |
 | `src/Boot.tsx`, `src/Gameplay.tsx`, `src/Multiplayer.tsx` | the three segments |
-| `src/Clip.tsx`, `src/FpsOverlay.tsx`, `src/Cards.tsx` | a capture window with caption and fps overlay; the cards |
+| `src/Clip.tsx`, `src/Cards.tsx` | a capture window, letterboxed (Mac windows get their rounded corner masked); the cards |
 | `src/captures.ts` | capture metadata types and loading |
 | `scripts/perf-to-json.mjs` | console.log + meta.json → perf.json |
 | `public/captures/` (gitignored) | the recordings |

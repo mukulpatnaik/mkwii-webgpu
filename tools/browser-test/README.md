@@ -40,7 +40,10 @@ and window.__mkwGuest in the page (`guest-memory.js`): the game's MEM1 and MEM2 
 and `autodrive('ghost')`, which puts a Time Trial ghost's recorded inputs on the player's own kart
 (`routes/demo-timetrial.cmds`; the run reproduces the ghost's time to the millisecond); and
 window.__mkwBot (`kart-bot.js`), a bot that drives the local player's kart along the course's CPU
-route through a fake gamepad (`routes/demo-gp.cmds`; room-test.js `MKW_BOT=1`).
+route through a fake gamepad (`routes/demo-gp.cmds`, `routes/demo-vs-*.cmds`; room-test.js
+`MKW_BOT=1`); it logs `[bot] go` on the race's first racing frame. When A picks a course the
+page logs it (`[web-warm] course 5 (shopping_course) chosen`): the VS routes `waitlog` for that
+line, and room-test.js reports it as each client's vote (`MKW_COURSE_KEYS`).
 
 Healthy signals in `console.log`: `[web-perf] fps=60.0`, `[web-pace] race steps/s=60.0` in a race,
 `[web-warm] 12 players ...` before a race loads. `out/` is gitignored (screenshots show the game).

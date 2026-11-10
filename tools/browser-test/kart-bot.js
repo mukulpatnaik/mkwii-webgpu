@@ -6,7 +6,8 @@
 //
 // Every 16 ms it reads the kart's position and rotation and the course's CPU route from the game's
 // memory (window.__mkwGuest), steers towards a point on the route a little ahead (pure pursuit),
-// holds accelerate once the race is on and uses whatever item it has every few seconds. Input goes
+// holds accelerate once the race is on (it logs `[bot] go` on the first racing frame, the video's
+// mark for GO) and uses whatever item it has every few seconds. Input goes
 // through a fake standard gamepad (navigator.getGamepads), which the page puts on port 1 next to the
 // keyboard: analog steering, A to accelerate, the left trigger for items.
 //
@@ -80,7 +81,7 @@ module.exports = String.raw`(() => {
     return {x: f(0x68), y: f(0x6C), z: f(0x70), fx: 2 * (qx * qz + qw * qy), fz: 1 - 2 * (qx * qx + qy * qy)};
   };
 
-  let timer = null, pts = null, idx = -1, me = 0, ticks = 0, last = null, prev = null, facing = 1, agree = 0;
+  let timer = null, pts = null, idx = -1, me = 0, ticks = 0, last = null, prev = null, facing = 1, agree = 0, went = false;
   const opts = {lookahead: 2200, gain: 2.2, itemEvery: 180, steerSign: -1};
   const tick = () => {
     try {
@@ -111,6 +112,7 @@ module.exports = String.raw`(() => {
       const dx = pts[t].x - k.x, dz = pts[t].z - k.z;
       const angle = Math.atan2(k.fz * dx - k.fx * dz, k.fx * dx + k.fz * dz);
       const racing = stage === 2;
+      if (racing && !went) { went = true; console.log('[bot] go'); }
       stick(racing ? opts.steerSign * opts.gain * angle : 0);
       button(0, racing);
       ticks++;
@@ -128,7 +130,7 @@ module.exports = String.raw`(() => {
   const start = (o = {}) => {
     Object.assign(opts, o);
     stop();
-    pts = null; idx = -1; ticks = 0; last = null; prev = null; facing = 1; agree = 0;
+    pts = null; idx = -1; ticks = 0; last = null; prev = null; facing = 1; agree = 0; went = false;
     padOn = true;
     const e = new Event('gamepadconnected'); e.gamepad = pad; window.dispatchEvent(e);
     timer = setInterval(tick, 16);

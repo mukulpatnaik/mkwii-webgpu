@@ -1,0 +1,12 @@
+# The last part of the VS demo captures (demo-vs-*.cmds `script` it), from the Start Race screen:
+# the bot takes the controller (kart-bot.js), OK loads the race, and the capture runs through the
+# flyover, the countdown (the bot's `[bot] go` line marks GO) and the first stretch of the race.
+shot start-race
+eval window.__mkwBot.start()
+mark ok
+click 500 430
+waitlog 30 \[bot\] route
+wait 30000
+wait 15000
+mark end
+wait 500

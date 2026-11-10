@@ -104,9 +104,8 @@ export const ClosingCard: React.FC<{durationInFrames: number}> = ({durationInFra
     <Fade durationInFrames={durationInFrames} background={theme.ground}>
       <AbsoluteFill style={ground}>
         <Tile>
-          <Reveal at={FADE_FRAMES}>
-            <div style={{fontSize: 76, fontWeight: 900, lineHeight: 1.1, whiteSpace: 'nowrap'}}>mukulpatnaik/mkwii-webgpu</div>
-          </Reveal>
+          {/* The top line is left open for a link; this keeps its height so the rest stays put. */}
+          <div style={{height: 84}} />
           <Reveal at={FADE_FRAMES + beat}>
             <Pill kind="yellow">Build it from your own disc.</Pill>
           </Reveal>
@@ -133,27 +132,4 @@ export const PlaceholderCard: React.FC<{durationInFrames: number; title: string;
       </Tile>
     </AbsoluteFill>
   </Fade>
-);
-
-// A short line of text over footage, bottom right, in the page's own overlay colours.
-export const Caption: React.FC<{text: string}> = ({text}) => (
-  <div
-    style={{
-      position: 'absolute',
-      right: 48,
-      bottom: 40,
-      maxWidth: 1100,
-      fontFamily: theme.fontFamily,
-      fontSize: 30,
-      fontWeight: 700,
-      color: theme.overlayText,
-      backgroundColor: theme.overlayBg,
-      padding: '14px 24px',
-      borderRadius: 999,
-      textAlign: 'right',
-      lineHeight: 1.3,
-    }}
-  >
-    {text}
-  </div>
 );

@@ -1,0 +1,40 @@
+# The first part of the VS demo captures (demo-vs-*.cmds `script` it): the same start as demo-boot
+# (Start, the controls panel hidden, the opening), then title -> licence 1 -> Single Player -> VS ->
+# Solo Race -> Mario, Standard Kart M, automatic drift -> the Courses screen, cup grid, on the
+# Mushroom Cup. Marks: page, start, title, main-menu. Left click is A, and every press counts
+# (demo-timetrial.cmds); the route anchors on the game's title-scene line and leaves each menu
+# time to slide in. Needs a licence in slot 1 (a seeded save, as demo-gp.cmds says).
+mark page
+waitstart 90000
+mark start
+wait 2500
+eval document.getElementById('hide-controls').click()
+waitlog 120 RVL_SDK - THP
+mark title
+wait 3000
+# title -> Select License (licence 1 under the cursor) -> main menu
+click 500 430
+wait 3000
+click 500 430
+wait 4500
+mark main-menu
+# Single Player, then down twice to VS
+click 500 430
+wait 8000
+key ArrowDown 150
+wait 1500
+key ArrowDown 150
+wait 1500
+shot single-player
+# VS -> Solo Race (under the cursor) -> Characters -> Vehicles -> Drift -> Courses
+click 500 430
+wait 4500
+click 500 430
+wait 4500
+click 500 430
+wait 4500
+click 500 430
+wait 4500
+click 500 430
+wait 4500
+shot courses

@@ -25,7 +25,12 @@
 // seeds a save (game/save/rksys.dat). MKW_BOT=1 drives both karts with kart-bot.js (a steering bot
 // on a fake pad) instead of the fixed keyboard drive (hold accelerate, tap left and right).
 // MKW_CHARACTER_KEYS_A / _B: menu keys pressed on that client's character screen before choosing
-// (e.g. "d" moves the cursor one column right), so the two drivers can differ.
+// (e.g. "d" moves the cursor one column right), so the two drivers can differ. MKW_COURSE_KEYS:
+// menu keys both clients press before each A once the players are matched, on the Check Members
+// screen (where they do nothing) and then on the Courses screen, where they move the vote
+// ("ArrowRight ArrowRight ArrowRight ArrowDown ArrowDown ArrowDown" is the Special Cup's fourth
+// course, Rainbow Road). The page logs the course A picks (`[web-warm] course 13 (rainbow_course)
+// chosen`), and the driver log says what each client voted for and which course loaded.
 //
 // For the demo video (tools/video/capture.sh multiplayer): MKW_WINDOW_A and MKW_WINDOW_B
 // ("WxH+X+Y") put the two clients in X11 windows (macOS: windows, in points) of that size and place on one display, with no
@@ -271,6 +276,17 @@ let ok = false;
   // reports race steps.
   const raceLine = /\[web-warm\] \d+ players|\[web-pace\] race steps\/s=/;
   const raceStarted = (c) => c.lines.some((l) => raceLine.test(l));
+  // The course vote. Once matched (the race-preparation scene, section 58) the Check Members OK
+  // comes first and then the Courses screen; neither is announced, so from then on the keys go
+  // before every A (on Check Members they do nothing) until the page logs the course A picked.
+  const courseKeys = (process.env.MKW_COURSE_KEYS || '').split(/\s+/).filter(Boolean);
+  const chosenRe = /\[web-warm\] course \d+ \((\w+)\) chosen/;
+  const chosen = (c) => { const l = c.lines.find((l) => chosenRe.test(l)); return l ? chosenRe.exec(l)[1] : null; };
+  const matched = (c) => c.lines.some((l) => /\[room-launch\] create section=58/.test(l));
+  const vote = async (c) => {
+    if (!courseKeys.length || !matched(c) || chosen(c)) return;
+    for (const key of courseKeys) { await c.page.keyboard.down(key); await sleep(150); await c.page.keyboard.up(key); await sleep(500); }
+  };
   const deadline = Date.now() + 240000;
   let presses = 0;
   while (Date.now() < deadline && !(a.racing && b.racing)) {
@@ -278,8 +294,11 @@ let ok = false;
       if (!c.racing && raceStarted(c)) {
         c.racing = true;
         say(`${c.label}: race: ${c.lines.find((l) => raceLine.test(l))}`);
+        say(`${c.label}: voted ${chosen(c) || 'nothing logged'}; course: ${c.lines.find((l) => /\[web-warm\] course file/.test(l)) || 'not logged'}`);
       }
-      if (!c.racing) await c.pressA();
+      if (c.racing) continue;
+      await vote(c);
+      await c.pressA();
     }
     presses++;
     if (presses % 3 === 0) for (const c of [a, b]) if (!c.racing) await c.shot(`menu-${String(presses).padStart(2, '0')}`);

@@ -4,6 +4,8 @@
 #
 #   tools/video/capture.sh boot            # page load, Start, shader compile, title     (~45 s)
 #   tools/video/capture.sh gp              # the same, then a 50cc Grand Prix race driven by the bot (~2.5 min)
+#   tools/video/capture.sh coconut-mall    # the same, then a VS race on Coconut Mall driven by the bot (~2.5 min)
+#   tools/video/capture.sh mushroom-gorge  # ... on Mushroom Gorge (routes/demo-vs-*.cmds)
 #   tools/video/capture.sh timetrial       # the same, then a Time Trial on the staff ghost's inputs (~3 min)
 #   tools/video/capture.sh race            # the same, then a 50cc Grand Prix race       (~4 min)
 #   tools/video/capture.sh multiplayer     # two clients in one race through the relay   (~4 min)
@@ -22,6 +24,9 @@
 # the room relay from tools/relay/dev-local.sh on 127.0.0.1:8787 unless one is running) and
 # records each window: video/public/captures/multiplayer/a/ and /b/, each with the files above.
 # The capture folder is gitignored: it shows the game and never goes into git.
+# The first run after a browser rebuild loses its route: the page's pipeline prewarm after Start
+# takes a minute instead of 4 s while macOS's Metal shader cache is cold for the new binary, and
+# the game ignores presses meanwhile. Run "boot" once first (video/README.md).
 #
 # On macOS the same steps run with the Mac's tools: the browser windows are placed with
 # --window-position/--window-size in the main display's visible frame (tools/video/mac-windows.js),
@@ -35,10 +40,14 @@
 # Environment: MKW_SITE (default work/sites/release-game/public, the staged site with the game
 # folder), MKW_PORT (8032), MKW_DISC (a disc image for a site without a game folder: the page's
 # picker is given it, read locally), DISPLAY (:0), MKW_WINDOW ("WxH+X+Y", default: the display's
-# work area; points on macOS), MKW_RACE_SECONDS (multiplayer: how long both clients drive, default 30),
+# work area cut to MKW_ASPECT at its top; points on macOS), MKW_ASPECT (default 16:9, the video's
+# shape, so the window fills the frame; "none" for the whole work area),
+# MKW_RACE_SECONDS (multiplayer: how long both clients drive, default 30),
 # MKW_BOT (multiplayer: 1, the default, drives both karts with tools/browser-test/kart-bot.js; 0 for
 # the fixed keyboard drive), MKW_CHARACTER_KEYS_A / _B (multiplayer: menu keys on that client's
-# character screen; B defaults to "d", one column right of Mario, so the two drivers differ).
+# character screen; B defaults to "d", one column right of Mario, so the two drivers differ),
+# MKW_COURSE_KEYS (multiplayer: menu keys both clients press on the course vote before A; default
+# three right and three down, Rainbow Road; empty for Luigi Circuit, the one under the cursor).
 # MKW_BROWSER=portal records the Portal dev build (~/code/browser on ~/code/portal-chromium:
 # PORTAL_BROWSER_REPO and PORTAL_CHROMIUM_ROOT override those paths, PORTAL_EXE the binary) with
 # Portal's own chrome instead of Google Chrome; MKW_BROWSER=chrome is the default. In Portal the
@@ -76,6 +85,7 @@ case "$name" in
   boot)        route="${2:-tools/browser-test/routes/demo-boot.cmds}"; max="${3:-120}" ;;
   race)        route="${2:-tools/browser-test/routes/demo-race.cmds}"; max="${3:-330}" ;;
   gp)          route="${2:-tools/browser-test/routes/demo-gp.cmds}"; max="${3:-240}" ;;
+  coconut-mall|mushroom-gorge) route="${2:-tools/browser-test/routes/demo-vs-$name.cmds}"; max="${3:-240}" ;;
   timetrial)   route="${2:-tools/browser-test/routes/demo-timetrial.cmds}"; max="${3:-260}" ;;
   multiplayer) route=room-test; max="${2:-600}" ;;
   *)           route="${2:?a route file (tools/browser-test/routes/*.cmds) is needed for $name}"; max="${3:-300}" ;;
@@ -96,7 +106,7 @@ url="http://127.0.0.1:$port/WiiCompiled.html?muted"
 out="video/public/captures/$name"
 [ -d tools/browser-test/node_modules/playwright-core ] || { echo "run: (cd tools/browser-test && npm install)" >&2; exit 1; }
 [ -d "$site" ] || { echo "no staged site at $site (MKW_SITE)" >&2; exit 1; }
-case "$name" in gp|timetrial) [ -f "$site/game/save/rksys.dat" ] ;; *) true ;; esac \
+case "$name" in gp|timetrial|coconut-mall|mushroom-gorge) [ -f "$site/game/save/rksys.dat" ] ;; *) true ;; esac \
   || echo "warning: the $name route expects a licence in slot 1, but $site/game has no save (tools/hosting/stage-game.sh --save)" >&2
 
 rm -rf "$out"; mkdir -p "$out"
@@ -183,6 +193,13 @@ elif [ "$mac" = 1 ]; then
 else
   read -r wx wy ww wh < <(xprop -root _NET_WORKAREA 2>/dev/null | sed 's/.*= //; s/,//g' | awk '{print $1, $2, $3, $4}')
   [ -n "${ww:-}" ] || { wx=0; wy=0; read -r ww wh < <(xdotool getdisplaygeometry); }
+fi
+# The video is 16:9 and a work area is not (a Mac's is 16:10 minus the menu bar), so the window
+# is the work area cut to that shape at its top, and fills the frame without letterboxing.
+aspect="${MKW_ASPECT:-16:9}"
+if [ -z "${MKW_WINDOW:-}" ] && [ "$aspect" != none ]; then
+  IFS=: read -r aw ah <<<"$aspect"
+  if [ $((ww * ah)) -gt $((wh * aw)) ]; then ww=$((wh * aw / ah / 2 * 2)); else wh=$((ww * ah / aw / 2 * 2)); fi
 fi
 
 encoder=(-c:v libx264 -preset veryfast -crf 18)
@@ -293,6 +310,7 @@ px() { echo $(($1 * scale)); }  # points to pixels (1 on Linux)
     licence=1; [ -f "$site/game/save/rksys.dat" ] && licence=0
     with_timeout "$max" env "${browser_env[@]}" CHROME_ARGS="$common_args" MKW_WINDOW_A="$wa" MKW_WINDOW_B="$wb" MKW_RACE_SECONDS="${MKW_RACE_SECONDS:-30}" \
       MKW_LICENCE="${MKW_LICENCE:-$licence}" MKW_BOT="${MKW_BOT:-1}" MKW_CHARACTER_KEYS_B="${MKW_CHARACTER_KEYS_B-d}" \
+      MKW_COURSE_KEYS="${MKW_COURSE_KEYS-ArrowRight ArrowRight ArrowRight ArrowDown ArrowDown ArrowDown}" \
       MKW_SPACE_THEME_A="${MKW_SPACE_THEME_A:-#c8102e,70,30}" MKW_SPACE_THEME_B="${MKW_SPACE_THEME_B:-#2e8b3a,70,30}" \
       node tools/browser-test/room-test.js "$url" "$out" >"$out/room-test.out" 2>&1 &
     drive_pid=$!

@@ -12,6 +12,8 @@
 // (the disc read of Scene/UI/Title.szs, right before the title screen), `race-loaded` (the
 // first `[web-warm] course file` line, when a race's course is loaded), and online `matched` (the
 // room's first `[room-launch] create section=58` line: the race-preparation scene after matchmaking).
+// A fourth, `bot-go`, is the driving bot's `[bot] go` line (kart-bot.js): the race's first racing
+// frame, GO itself, within a frame or two.
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -46,6 +48,8 @@ for (const line of lines) {
     markers.push({ t: toVideo(t), name: 'title-loaded' });
   } else if (text.startsWith('[web-warm] course file') && !markers.some((k) => k.name === 'race-loaded')) {
     markers.push({ t: toVideo(t), name: 'race-loaded' });
+  } else if (text === '[bot] go' && !markers.some((k) => k.name === 'bot-go')) {
+    markers.push({ t: toVideo(t), name: 'bot-go' });
   } else if (text.startsWith('[room-launch] create section=58') && !markers.some((k) => k.name === 'matched')) {
     // Online play: the race-preparation scene, right after "Your opponents have been chosen!".
     markers.push({ t: toVideo(t), name: 'matched' });
