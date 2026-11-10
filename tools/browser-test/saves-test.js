@@ -49,6 +49,12 @@ const closeProfile = async () => {
   fs.rmSync(profileDir, { recursive: true, force: true });
   context = null;
 };
+// Before Start the saves block is on the menu's Saves view; after Start (and on a page from before
+// the menu) it is in the side panel and needs no click.
+const openSavesView = async (p) => {
+  const nav = p.locator('#nav-saves');
+  if ((await nav.count()) && (await nav.isVisible())) await nav.click();
+};
 const panelText = (p) => p.evaluate(() => ({
   storage: document.getElementById('saves-storage')?.textContent,
   message: document.getElementById('saves-message')?.textContent,
@@ -102,10 +108,12 @@ const waitReady = (p, ms = 180000) => p.waitForFunction(() => {
         say(`shot ${name}`);
       } else if (cmd === 'panel') {
         const name = path.join(outdir, `${String(++shotN).padStart(3, '0')}-${profileName}-${args[0] || 'panel'}.png`);
+        await openSavesView(page);
         await page.locator('#saves-panel').scrollIntoViewIfNeeded();
         await page.locator('#saves-panel').screenshot({ path: name });
         say(`shot ${name}`);
       } else if (cmd === 'press') {
+        if (args[0].startsWith('#saves-')) await openSavesView(page);
         await page.click(args[0]);
         await page.waitForTimeout(Number(args[1] || 3000));
         say('text -> ' + JSON.stringify(await panelText(page)));
@@ -115,6 +123,7 @@ const waitReady = (p, ms = 180000) => p.waitForFunction(() => {
       else if (cmd === 'export') {
         const target = path.join(outdir, args[1]);
         const download = page.waitForEvent('download', { timeout: 15000 });
+        await openSavesView(page);
         await page.click(args[0] === 'backup' ? '#saves-backup' : '#saves-export');
         const file = await download.catch(() => null);
         if (file) {
@@ -142,6 +151,7 @@ const waitReady = (p, ms = 180000) => p.waitForFunction(() => {
         await second.screenshot({ path: name });
         say(`shot ${name}`);
         const panelName = name.replace(/\.png$/, '-panel.png');
+        await openSavesView(second);
         await second.locator('#saves-panel').scrollIntoViewIfNeeded();
         await second.locator('#saves-panel').screenshot({ path: panelName });
         say(`shot ${panelName}`);

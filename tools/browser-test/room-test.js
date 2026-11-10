@@ -208,6 +208,15 @@ class Client {
   }
 }
 
+// The page's menu keeps the room controls on its Play with friends view; a page from before the menu
+// has no #nav-friends and shows them straight away.
+async function openFriendsView(page) {
+  const nav = page.locator('#nav-friends');
+  if (!(await nav.count())) return;
+  await nav.waitFor({ state: 'visible', timeout: 60000 });
+  await nav.click();
+}
+
 const a = new Client('a', 'Alice'), b = new Client('b', 'Bob');
 let ok = false;
 (async () => {
@@ -218,6 +227,7 @@ let ok = false;
   // A creates the room; the page moves to ?room=<code>.
   await a.open(url);
   await a.page.waitForSelector('#create-room', { state: 'attached', timeout: 60000 });
+  await openFriendsView(a.page);
   await a.page.click('#create-room');
   await a.page.waitForFunction(() => /[?&]room=[a-z0-9]{6,32}/.test(location.search), null, { timeout: 30000 });
   const code = new URL(a.page.url()).searchParams.get('room');
@@ -226,6 +236,7 @@ let ok = false;
   // B types the code into Join room.
   await b.open(url);
   await b.page.waitForSelector('#room-code', { state: 'attached', timeout: 60000 });
+  await openFriendsView(b.page);
   await b.page.fill('#room-code', code);
   await b.page.click('#join-room');
   await b.page.waitForFunction((c) => location.search.includes(`room=${c}`), code, { timeout: 30000 });
