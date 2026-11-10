@@ -87,10 +87,10 @@ behind Cloudflare Access.
 
 ## How friends get access
 
-See [hosting.md](hosting.md): Tailscale in front of nginx or `mkw-web` for a few friends, Caddy or
-nginx with HTTPS and a password on a reachable machine, or Cloudflare Worker + R2 + Access. All
-scripted under `tools/hosting/` (our own Worker, uploader, local server and game-folder staging);
-nginx and the Worker were tested with real Chrome runs, and a real Cloudflare deploy behind
-Access went live on 2026-10-29; Tailscale and Caddy were not tested. Each friend must own the
-game and pick their own disc image; the owner shares only the page URL and adds their e-mail to
-the Access policy, never the `.wasm` file or any game data.
+See [hosting.md](hosting.md): Cloudflare Worker + R2 (the owner's build, public since
+2026-11-09), or for a private build the same behind Access, Tailscale in front of nginx or
+`mkw-web`, or Caddy or nginx with HTTPS and a password. All scripted under `tools/hosting/` (our
+own Worker, uploader, local server and game-folder staging); nginx and the Worker were tested with
+real Chrome runs, and a real Cloudflare deploy went live on 2026-10-29 (behind Access until
+2026-11-09); Tailscale and Caddy were not tested. Each player picks their own disc image; the
+owner shares the page URL, never a game folder or any disc data.

@@ -147,3 +147,12 @@ Retro-WFC and Retro Rewind are not Phase 1 requirements.
 - Floating-point: FTZ on intermediates is lost and NaN payloads differ; validated with ghost
   replays before claiming physics parity.
 - Chrome/Edge with WebGPU only, until JSPI and WebGPU ship broadly elsewhere.
+
+## Amendment (2026-11-09)
+
+"It can never be hosted" above was this project's policy, not a technical fact, and the owner
+changed it on 2026-11-09: the build is hosted at a public address, as the N64 and Xbox 360
+static-recompilation projects publish theirs (README, "Legal"; docs/hosting.md). The translated
+output still embeds the game's data sections; emitting them as files loaded from the player's own
+disc at run time would put the hosted build on the same footing as those projects, and is the
+natural next change to the translator branch.

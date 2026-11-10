@@ -17,8 +17,10 @@ harness, and private hosting. State and evidence: [docs/release-checklist.md](do
 - **Nothing derived from the game goes into git, ever:** no disc images, no extracted files, no
   translated C++, no `.wasm`/`.data` of the game build, no staged site, no screenshots of the
   game. `.gitignore` covers the usual paths; check `git status` before every commit.
-- **The built `.wasm` contains translated game code.** It is hosted privately, for people who own
-  the game, and never shared publicly. Each player supplies their own disc image in the page.
+- **The built `.wasm` contains translated game code** (and, with the current translator, the
+  game's data sections). Since 2026-11-09 the owner hosts their build at a public address, as the
+  N64 and Xbox 360 recompilation projects publish theirs; nothing from the disc's files is on the
+  host, and each player supplies their own disc image in the page. Only the owner deploys.
 - **Nothing is pushed, deployed or posted upstream without the owner's say-so.** The scripts stop
   before any real deploy and print what to run.
 - Web changes live in `runtime/src/platform/web/` or behind `__EMSCRIPTEN__`; the native Linux
@@ -95,9 +97,13 @@ images, no extracted files, no translated code, no builds. The browser build can
 from a disc you own, on your own machine (`scripts/build-private-bundle.sh`), and the result
 contains the game's code in translated form. So:
 
-- No builds are published here or anywhere else, and none will be. There are no GitHub Releases.
-- A build you make is for you and for people who own the game, behind a login
-  ([docs/hosting.md](docs/hosting.md)). Never put it on a public address.
+- No builds are published in this repository: no GitHub Releases, no build artefacts in git.
+- The owner hosts one build, made from their own disc, at a public address
+  ([docs/hosting.md](docs/hosting.md)). That build holds the game's code in translated form and,
+  with the current translator output, the game's `.data`/`.rodata` sections. Publishing a build
+  that needs the player's own disc is what the N64 and Xbox 360 static-recompilation projects and
+  the decompilation-based PC ports do; it has not been tested in court. This was the owner's
+  decision on 2026-11-09, taken knowing the above; until then the build sat behind a login.
 - Players always supply their own disc image; the page reads it in their browser and uploads
   nothing.
 

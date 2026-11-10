@@ -1,9 +1,10 @@
-# Hosting the private build for friends
+# Hosting the build
 
-How the owner puts the page somewhere friends can open it. Each friend must own the game and
-picks their own disc image in the page (read in their browser, never uploaded). The page files
-contain translated game code, so the site is private: behind a login or a VPN, never on a public
-address without one, never shared with people who do not own the game.
+How the owner puts the page somewhere people can open it. Each player picks their own disc
+image in the page (read in their browser, never uploaded). The page files contain translated game
+code (and the game's data sections), and until 2026-11-09 the site was private, behind a login;
+since then the owner hosts it at a public address (README, "Legal"). The login setup is kept
+below for anyone who wants a private build.
 
 State on 2026-10-29. Scripts under `tools/hosting/` (all this project's own: the Worker, the
 uploader, a local server, game-folder staging); evidence at the end.
@@ -21,7 +22,8 @@ Whatever serves the files must:
 4. be a **secure context**: HTTPS, or `127.0.0.1` / `localhost`. Plain `http://` on a LAN or VPN
    address is not one, and the page then stops with "This browser is missing: cross-origin
    isolation". This rules out "just open port 8000 on the LAN";
-5. have access control. Cloudflare Access, a Tailscale network, or HTTP basic auth over HTTPS.
+5. for a private build, have access control: Cloudflare Access, a Tailscale network, or HTTP basic
+   auth over HTTPS. The owner's build is public and has none.
 
 The release folder is six files (`tools/hosting/stage-release.sh`, with `SHA256SUMS`):
 
@@ -97,11 +99,11 @@ tools/hosting/serve-nginx.sh --bind 0.0.0.0 --port 8443 --cert fullchain.pem --k
 `serve-nginx.sh --help` lists the options; `--check` validates without starting. The plain
 `127.0.0.1` form (no `--bind`, no certificate) is what 1a uses and what the evidence below tested.
 
-## Option 2: Cloudflare (Worker + R2 + Access)
+## Option 2: Cloudflare (Worker + R2, Access optional)
 
 The page is served by a Worker (`tools/hosting/cloudflare/worker.js`, unit tests next to it) from
-a private R2 bucket, and Cloudflare Access puts a login in front of the Worker. Nothing runs on
-your machine; friends anywhere can play. This is the shape Minithena used for their build.
+a private R2 bucket; Cloudflare Access can put a login in front of the Worker. Nothing runs on
+your machine; anyone can play. This is the shape Minithena used for their build, with Access.
 
 You need: a Cloudflare account; R2 enabled on it (a payment method is required even though the
 free tier, 10 GB stored and 10 million reads a month, covers this); Cloudflare Access (Zero
@@ -121,8 +123,8 @@ tools/hosting/cloudflare/deploy.sh --worker mkw-web --bucket mkw-web            
 the folder; a page or manifest is uploaded after the files it names). `--no-upload` deploys the
 Worker with the bucket still empty, so Access can be put in front of it before any file exists.
 
-Then, once, in the dashboard (Cloudflare attaches Access policies to a Worker since August 2026,
-covering its `workers.dev` address as well as routes and custom domains):
+For a private build, once, in the dashboard (Cloudflare attaches Access policies to a Worker
+since August 2026, covering its `workers.dev` address as well as routes and custom domains):
 
 1. Workers & Pages, your Worker, the Access tab.
 2. Enable Access for all hostnames of the Worker (not only preview URLs).
@@ -134,6 +136,12 @@ Deploy before the policy exists and the `.wasm` is public for that interval; do 
 right after the first deploy, or create the Worker and the policy first and deploy afterwards.
 Access blocks WebSockets, which is why the room relay for online play runs as a separate Worker
 outside it; it serves no game files (see "Online play" below).
+
+To make a private Worker public again, the same Access tab: disable Access for the Worker (or
+delete its Access application under Zero Trust, Access, Applications). Then, in a private browser
+window, the Worker's address must show the page itself, not a login; `curl -sI` on
+`/WiiCompiled.html` must answer `200` with the three cross-origin headers, not a `302`. The
+owner's build has been public since 2026-11-09.
 
 Measured by Minithena from the US east coast against a Western Europe bucket: 0.4 to 0.5 s per
 request, which is why a `--with-game` deployment loads races slowly from far away. Players'

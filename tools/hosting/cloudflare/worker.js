@@ -4,8 +4,9 @@
 // response (threads need SharedArrayBuffer), single byte ranges for the lazily read disc files,
 // application/wasm for the game, and a /log sink for pages opened with ?log.
 //
-// Keep this Worker behind Cloudflare Access (docs/hosting.md): the bucket holds translated game
-// code, and files from the owner's disc when a game folder is staged.
+// The bucket holds translated game code (the owner's build is public since 2026-11-09; README,
+// "Legal"). A staged game folder adds files from the owner's disc: only ever behind Cloudflare
+// Access (docs/hosting.md).
 //
 // Binding: BUCKET (R2). Configuration: tools/hosting/cloudflare/wrangler.jsonc.in.
 
