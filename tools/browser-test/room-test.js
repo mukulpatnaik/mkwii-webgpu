@@ -34,8 +34,8 @@
 //
 // For the demo video (tools/video/capture.sh multiplayer): MKW_WINDOW_A and MKW_WINDOW_B
 // ("WxH+X+Y") put the two clients in X11 windows (macOS: windows, in points) of that size and place on one display, with no
-// viewport emulation and no automation bar, and hide the page's controls panel once the game is
-// launched. The driver's marks (`[driver] mark <name>`: page, lobby, play, race-loaded, go, end)
+// viewport emulation and no automation bar (the page shows nothing over the game once it is
+// launched). The driver's marks (`[driver] mark <name>`: page, lobby, play, race-loaded, go, end)
 // and its epoch time go into both console logs, so the recording can be cut by them.
 const { chromium } = require('playwright-core');
 const fs = require('fs');
@@ -44,6 +44,9 @@ const path = require('path');
 const portal = require('./portal'); // MKW_CHROME, MKW_PORTAL, CHROME_ARGS: another Chromium, e.g. the Portal dev build
 const guestMemory = require('./guest-memory');
 const kartBot = require('./kart-bot');
+// The drivers and their routes speak the WASD + mouse layout (a click is the game's A button, a and
+// d steer); the page's default is the arrow keys, so ask for the old layout unless the URL says.
+const withLayout = (u) => /[?&]layout=/.test(u) ? u : u + (u.includes('?') ? '&' : '?') + 'layout=wasd';
 
 const [url, outdir] = process.argv.slice(2);
 if (!url || !outdir) {
@@ -182,7 +185,7 @@ class Client {
   }
 
   async open(target) {
-    await this.page.goto(target, { waitUntil: 'domcontentloaded' });
+    await this.page.goto(withLayout(target), { waitUntil: 'domcontentloaded' });
     say(`${this.label}: opened ${target}`);
   }
 
@@ -190,6 +193,8 @@ class Client {
   async createLicence() {
     await this.open(url);
     await this.waitForStart('Start', 300000);
+    // Start sits on the menu's Play solo screen: open it first (a room page is already on its own screen).
+    await this.page.evaluate(() => { if (document.getElementById('menu')?.dataset.screen === '') document.getElementById('nav-solo')?.click(); }).catch(() => {});
     await this.page.click('#start');
     say(`${this.label}: clicked Start; waiting for the first screen`);
     await this.waitForLine(/\[web-perf\] fps=/, 120000, '[web-perf] line after Start');
@@ -257,7 +262,6 @@ let ok = false;
   if (windowed) await sleep(4000); // the lobby with both names, for the recording
   for (const c of [a, b]) { await c.page.click('#start'); say(`${c.label}: clicked Play online`); }
   mark('play');
-  if (windowed) for (const c of [a, b]) await c.page.evaluate(() => document.getElementById('hide-controls')?.click()).catch(() => {});
 
   // The direct room entry: [vnet] joins the room, the game logs in, character selection opens.
   // A manual or failed hand-off ends the run (the game then needs its own menus).

@@ -64,6 +64,8 @@ fs.mkdirSync(outdir, { recursive: true });
     console.log(`t+${Math.round((Date.now() - t0) / 1000)}s ${JSON.stringify(status)}`);
     // Press Start once it is enabled.
     if (status.start && /disabled=false/.test(status.start) && !/clicked/.test(status.start)) {
+      // Start sits on the menu's Play solo screen: open it first (a room page is already on its own screen).
+      await page.evaluate(() => { if (document.getElementById('menu')?.dataset.screen === '') document.getElementById('nav-solo')?.click(); }).catch(() => {});
       await page.click('#start').catch(() => {});
       console.log('clicked #start');
     }

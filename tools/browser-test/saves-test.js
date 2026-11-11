@@ -25,6 +25,9 @@ const crypto = require('crypto');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
+// The drivers and their routes speak the WASD + mouse layout (a click is the game's A button, a and
+// d steer); the page's default is the arrow keys, so ask for the old layout unless the URL says.
+const withLayout = (u) => /[?&]layout=/.test(u) ? u : u + (u.includes('?') ? '&' : '?') + 'layout=wasd';
 const [url, outdir] = process.argv.slice(2);
 fs.mkdirSync(outdir, { recursive: true });
 const cmdFile = path.join(outdir, 'cmds');
@@ -49,11 +52,14 @@ const closeProfile = async () => {
   fs.rmSync(profileDir, { recursive: true, force: true });
   context = null;
 };
-// Before Start the saves block is on the menu's Saves view; after Start (and on a page from before
-// the menu) it is in the side panel and needs no click.
+// Before Start the saves block is on the menu's Saves screen (the round Saves button opens it);
+// after Start it is the Saves card of the corner pill. A page from before the menu shows it
+// straight away.
 const openSavesView = async (p) => {
+  if (await p.locator('#saves-panel').isVisible().catch(() => false)) return;
   const nav = p.locator('#nav-saves');
-  if ((await nav.count()) && (await nav.isVisible())) await nav.click();
+  if ((await nav.count()) && (await nav.isVisible())) { await nav.click(); return; }
+  await p.evaluate(() => document.getElementById('dock-saves')?.click()).catch(() => {});
 };
 const panelText = (p) => p.evaluate(() => ({
   storage: document.getElementById('saves-storage')?.textContent,
@@ -91,11 +97,11 @@ const waitReady = (p, ms = 180000) => p.waitForFunction(() => {
         });
         page = context.pages()[0] || await context.newPage();
         watch(page, profileName);
-        await page.goto(url, { waitUntil: 'domcontentloaded' });
+        await page.goto(withLayout(url), { waitUntil: 'domcontentloaded' });
         say(`profile ${profileName} at ${profileDir}`);
       } else if (cmd === 'reload') await page.reload({ waitUntil: 'domcontentloaded' });
       else if (cmd === 'waitready') { await waitReady(page, Number(args[0] || 180000)); say('ready'); }
-      else if (cmd === 'start') await page.click('#start');
+      else if (cmd === 'start') { await page.evaluate(() => { if (document.getElementById('menu')?.dataset.screen === '') document.getElementById('nav-solo')?.click(); }).catch(() => {}); await page.click('#start'); }
       else if (cmd === 'wait') await page.waitForTimeout(Number(args[0]));
       else if (cmd === 'click') {
         const x = Number(args[0] || 500), y = Number(args[1] || 430);
@@ -144,7 +150,7 @@ const waitReady = (p, ms = 180000) => p.waitForFunction(() => {
       else if (cmd === 'tab2') {
         const second = await context.newPage();
         watch(second, `${profileName}-tab2`);
-        await second.goto(url, { waitUntil: 'domcontentloaded' });
+        await second.goto(withLayout(url), { waitUntil: 'domcontentloaded' });
         await second.waitForTimeout(Number(args[1] || 20000));
         say('tab2 text -> ' + JSON.stringify(await panelText(second)));
         const name = path.join(outdir, `${String(++shotN).padStart(3, '0')}-${profileName}-${args[0] || 'tab2'}.png`);

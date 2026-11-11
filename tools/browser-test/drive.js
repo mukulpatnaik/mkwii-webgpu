@@ -6,6 +6,9 @@
 const { chromium } = require('playwright-core');
 const fs = require('fs');
 const path = require('path');
+// The drivers and their routes speak the WASD + mouse layout (a click is the game's A button, a and
+// d steer); the page's default is the arrow keys, so ask for the old layout unless the URL says.
+const withLayout = (u) => /[?&]layout=/.test(u) ? u : u + (u.includes('?') ? '&' : '?') + 'layout=wasd';
 const [url, outdir] = process.argv.slice(2);
 fs.mkdirSync(outdir, { recursive: true });
 const cmdFile = path.join(outdir, 'cmds');
@@ -25,13 +28,13 @@ const say = (s) => { dlog.write(`${new Date().toISOString()} ${s}\n`); };
   page.on('console', (m) => log.write(`[${((Date.now() - t0) / 1000).toFixed(1)}] [${m.type()}] ${m.text()}\n`));
   page.on('pageerror', (e) => log.write(`[pageerror] ${e.message}\n`));
   page.on('crash', () => log.write('[crash] page crashed\n'));
-  await page.goto(url, { waitUntil: 'domcontentloaded' });
+  await page.goto(withLayout(url), { waitUntil: 'domcontentloaded' });
   say('loaded');
   let done = 0, shotN = 0, startClicked = false;
   for (;;) {
     if (!startClicked) {
       const ok = await page.evaluate(() => { const b = document.getElementById('start'); return b && !b.disabled && !b.hidden; }).catch(() => false);
-      if (ok) { await page.click('#start').catch(() => {}); startClicked = true; say('clicked #start'); }
+      if (ok) { await page.evaluate(() => { if (document.getElementById('menu')?.dataset.screen === '') document.getElementById('nav-solo')?.click(); }).catch(() => {}); await page.click('#start').catch(() => {}); startClicked = true; say('clicked #start'); }
     }
     const lines = fs.readFileSync(cmdFile, 'utf8').split('\n').filter((l) => l.trim());
     if (done >= lines.length) { await page.waitForTimeout(300); continue; }

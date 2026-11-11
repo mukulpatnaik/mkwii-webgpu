@@ -32,6 +32,9 @@ const path = require('path');
 const portal = require('./portal'); // MKW_CHROME, MKW_PORTAL: another Chromium, e.g. the Portal dev build
 const guestMemory = require('./guest-memory');
 const kartBot = require('./kart-bot');
+// The drivers and their routes speak the WASD + mouse layout (a click is the game's A button, a and
+// d steer); the page's default is the arrow keys, so ask for the old layout unless the URL says.
+const withLayout = (u) => /[?&]layout=/.test(u) ? u : u + (u.includes('?') ? '&' : '?') + 'layout=wasd';
 const [url, outdir] = process.argv.slice(2);
 fs.mkdirSync(outdir, { recursive: true });
 const cmdFile = path.join(outdir, 'cmds');
@@ -87,7 +90,7 @@ const traceCategories = (process.env.TRACE_CATEGORIES ||
   });
   page.on('pageerror', (e) => log.write(`[pageerror] ${e.message}\n`));
   page.on('crash', () => log.write('[crash] page crashed\n'));
-  await page.goto(url, { waitUntil: 'domcontentloaded' });
+  await page.goto(withLayout(url), { waitUntil: 'domcontentloaded' });
   say('loaded');
   let done = 0, shotN = 0, startClicked = false;
   const queue = [];
@@ -95,6 +98,8 @@ const traceCategories = (process.env.TRACE_CATEGORIES ||
     if (startClicked) return;
     const ok = await page.evaluate(() => { const b = document.getElementById('start'); return b && !b.disabled && !b.hidden; }).catch(() => false);
     if (ok) {
+      // Start sits on the menu's Play solo screen: open it first (a room page is already on its own screen).
+      await page.evaluate(() => { if (document.getElementById('menu')?.dataset.screen === '') document.getElementById('nav-solo')?.click(); }).catch(() => {});
       await page.click('#start').catch(() => {}); startClicked = true;
       say('clicked #start'); log.write(`[${stamp()}] [driver] clicked #start\n`);
     }
@@ -114,7 +119,7 @@ const traceCategories = (process.env.TRACE_CATEGORIES ||
       else if (cmd === 'goto') {
         // A fresh load of another URL (e.g. other page options) in the same browser.
         log.write(`[${stamp()}] [driver] goto ${args[0]}\n`);
-        await page.goto(args[0], { waitUntil: 'domcontentloaded' }); startClicked = false;
+        await page.goto(withLayout(args[0]), { waitUntil: 'domcontentloaded' }); startClicked = false;
       }
       else if (cmd === 'mark') log.write(`[${stamp()}] [driver] mark ${args.join(' ')}\n`);
       else if (cmd === 'waitstart') {

@@ -16,30 +16,55 @@ Gamepad API ─► Emscripten html5 gamepad glue ─► SDL3 Emscripten joystick
 - SDL gives each connected pad a player index in connection order: first pad port 1, second port 2,
   and so on. F10 → Controller settings → Port N → "Assign connected controller" moves a pad to
   another port; the choice is saved.
-- The web build turns on **keyboard and mouse for port 1** at first start (WASD preset below).
+- The web build turns on the **keyboard for port 1** at first start (arrow keys preset below).
   A pad on port 1 works alongside it: the pad is read and the keyboard adds to it (F10 says
   "Works alongside a gamepad on this port"). Natively the keyboard replaces the pad on its port.
 - The browser hides pads from a page until a button is pressed on them while the page is open.
 
-## Keyboard and mouse (port 1, default)
+## Keyboard (port 1, default)
 
-These are the defaults of the "Use WASD + mouse preset" in F10, which the web build applies at
-first start. The page's Controls panel shows the live bindings for port 1.
+These are the defaults of the "Use arrow keys preset" in F10, which the web build applies at
+first start: the arrow keys steer and the left hand does the rest, as PC kart racers and
+Dolphin's GameCube pad default have it. A browser that already has saved bindings keeps them;
+the preset buttons in F10 → Controller settings → Keyboard switch layouts. The page's Controls
+card shows the live bindings for port 1: in the game, the faint menu button in the top right
+corner (or Tab), then Controls; before the game, Controls on the menu.
 
 | Key | GameCube input | In a race | In menus |
 |---|---|---|---|
-| A / D | Control stick left / right | Steer | Move |
-| W / S | Control stick up / down | Aim item forward / back | Move |
-| Left click | A | Accelerate | Confirm |
-| Space | B | Brake / reverse | Back |
-| Right click | R (button and full analog pull) | Drift, hop | — |
-| Shift | L (button and full analog pull) | Use item | — |
-| ↑ ← ↓ → | D-pad | ↑: trick (in the air, as you leave a ramp) | D-pad |
+| ← / → | Control stick left / right | Steer | Move |
+| ↑ / ↓ | Control stick up / down | Aim item forward / back | Move |
+| X | A | Accelerate | Confirm |
+| Z | B | Brake / reverse | Back |
+| Left Shift | R (button and full analog pull) | Drift, hop | — |
+| Space | L (button and full analog pull) | Use item | — |
+| W / A / S / D | D-pad up / left / down / right | W: trick (in the air, as you leave a ramp) | D-pad |
 | Enter | Start | Pause | — |
-| E | X | not listed on the page | — |
-| Q | Y | not listed on the page | — |
-| Middle click | Z | not listed on the page | — |
+| C | X | not listed on the page | — |
+| V | Y | not listed on the page | — |
+| Q | Z | not listed on the page | — |
 | L / J / I / K | C-stick right / left / up / down | not listed on the page | — |
+
+### The WASD + mouse preset
+
+"Use WASD + mouse preset" in F10 is the layout the web build used as its default until
+2026-11-10, and the one Dolphin's emulated Wii Remote and Nunchuk default resembles:
+
+| Key | GameCube input | In a race |
+|---|---|---|
+| A / D, W / S | Control stick | Steer; aim item forward / back |
+| Left click | A | Accelerate |
+| Space | B | Brake / reverse |
+| Right click | R | Drift, hop |
+| Left Shift | L | Use item |
+| ↑ ← ↓ → | D-pad | ↑: trick |
+| Enter | Start | Pause |
+| E, Q, Middle click | X, Y, Z | not listed on the page |
+| L / J / I / K | C-stick | not listed on the page |
+
+`?layout=wasd` (or `?layout=arrows`) in the page's address applies that preset to port 1 at start,
+whatever is saved. The browser test drivers add `layout=wasd` themselves: their recorded routes
+speak this layout (a click is the game's A button, a and d steer).
 
 Page and runtime keys (not game inputs):
 
@@ -54,13 +79,14 @@ stick Steer, A Accelerate, L Use Item, R Brake.
 
 ### Changing keys
 
-- **On the page:** click a key in the Controls panel (it is enabled once the game runs), then press
+- **On the page:** click a key in the Controls card (it is enabled once the game runs), then press
   a key or click a mouse button in the game. Backspace or Delete clears the binding; Cancel, or
   ten seconds without input, keeps the old one. The page sends the request to the runtime
   (`Module._mkw_web_rebind`), the runtime applies it at the next frame and publishes player 1's
   bindings back to the page as JSON (`window.mkwSetBindings`), which relabels every key.
 - **In F10 → Controller settings:** pick a port, tick "Keyboard and mouse" for it, and click any
-  binding. "Use WASD + mouse preset" restores the defaults. F10 cannot be bound.
+  binding. "Use arrow keys preset" restores the defaults; "Use WASD + mouse preset" switches to the
+  mouse layout. F10 cannot be bound.
 - Bindings are saved in the browser's storage for this site (OPFS, under `/persist`), so they
   survive a reload but not clearing site data or a different browser profile. If the storage is
   not persistent, the page says so ("Changes are lost when you reload").
@@ -146,7 +172,8 @@ combined axis; the wizard cannot bind that, so skip the D-pad steps there), Fire
    canvas element fills the area and letterboxes the picture with `object-fit: contain`, but
    SDL scales mouse positions by the element size, so on a non-16:9 window clicks hit a point
    above or below the item under the pointer. Keyboard play is unaffected (a click is position
-   independent). Workaround: make the window close to 16:9 or hide the Controls panel.
+   independent). Workaround: make the window close to 16:9 (the picture now takes the whole window, so the
+   window's shape is the element's shape).
 3. **Wii Remotes, Nunchuks and Classic Controllers do not work in the browser.** The game reads
    them through WPAD/KPAD, which the runtime feeds from SDL's HIDAPI Wii driver over Bluetooth;
    the Emscripten SDL build has no HIDAPI, so the "Wii Remotes (Bluetooth)" menu finds nothing and
