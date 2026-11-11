@@ -1,0 +1,867 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wii theme ideas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,400;0,700;0,800;0,900;1,900&family=Quicksand:wght@500;600;700&family=Dosis:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* ---------- Page chrome (neutral, never themed) ---------- */
+  html { scroll-behavior: smooth; }
+  body { margin: 0; background: #f4f5f7; color: #2b2f33;
+         font: 15px/1.5 Nunito, "Varela Round", ui-rounded, "Arial Rounded MT Bold", system-ui, sans-serif; }
+  .top { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+         padding: 12px 24px; background: #ffffffee; backdrop-filter: blur(8px); border-bottom: 1px solid #dfe3e7; }
+  .top h1 { font-size: 17px; margin: 0 12px 0 0; }
+  .top nav a { color: #2b8fd1; font-weight: 800; text-decoration: none; margin-right: 14px; }
+  .top nav a:hover { text-decoration: underline; }
+  .top .spacer { flex: 1; }
+  .toggle { font: inherit; font-weight: 800; border-radius: 999px; padding: 7px 16px; cursor: pointer;
+            border: 1px solid #b4bbc2; background: linear-gradient(#fff, #e6e9ec); color: #4b5157; }
+  .toggle[aria-pressed="true"] { background: linear-gradient(#17367a, #0a1a44); color: #ffd21f; border-color: #4f86c6; }
+  main { max-width: 1180px; margin: 0 auto; padding: 28px 24px 80px; }
+  section.idea { margin: 0 0 64px; }
+  section.idea > h2 { font-size: 28px; margin: 0 0 4px; }
+  section.idea > h2 small { font-size: 15px; font-weight: 700; color: #6f767d; margin-left: 10px; }
+  .lede { max-width: 820px; margin: 0 0 16px; color: #4b5157; }
+  .notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px 24px; margin: 16px 0 0;
+           padding: 0; list-style: none; max-width: 1000px; }
+  .notes li { padding: 10px 14px; background: #fff; border: 1px solid #dfe3e7; border-radius: 12px; font-size: 14px; }
+  .notes b { color: #2b8fd1; }
+  .hint { font-size: 13px; color: #6f767d; margin: 8px 0 0; }
+  .state { display: flex; align-items: center; gap: 8px; margin: 0 0 10px; font-size: 13px; color: #6f767d; font-weight: 700; }
+  .state button { font: inherit; font-weight: 800; border-radius: 999px; padding: 5px 12px; cursor: pointer;
+                  border: 1px solid #b4bbc2; background: #fff; color: #4b5157; }
+  .state button[aria-pressed="true"] { background: #2b8fd1; color: #fff; border-color: #2b8fd1; }
+
+  /* ---------- Theme tokens: light is the Wii Menu, dark is the page's current navy ---------- */
+  .wii {
+    --ground: linear-gradient(#f4f5f7, #dde1e5);
+    --stripes: repeating-linear-gradient(180deg, rgba(255, 255, 255, .6) 0 1px, rgba(255, 255, 255, 0) 1px 4px);
+    --tile: linear-gradient(#ffffff, #f6f8fa);
+    --tile-stripes: repeating-linear-gradient(180deg, #e6f3fb 0 .22em, #ffffff .22em .52em);
+    --tile-line: #c9cfd4; --tile-shadow: inset 0 1px 0 #fff, 0 .15em .35em rgba(0, 0, 0, .10);
+    --glow: 0 0 0 .22em #c9ebff, 0 0 0 .4em #8fd4ff, 0 0 1.6em #8fd4ff;
+    --text: #4b5157; --muted: #868c92; --title: #5a6066; --big: #5d6267;
+    --blue: #6ac8f3; --blue-deep: #1f9ae3; --blue-text: #2b8fd1;
+    --bar: #d8dcdf; --bar-hi: #eceef0; --bar-line: #6ec9f3; --bar-flat: #d4d7da;
+    --pill: linear-gradient(#ffffff, #e4e8eb); --pill-line: #b4bbc2; --pill-text: #4b5157;
+    --primary: linear-gradient(#9ee0ff, #3cb1ee 50%, #1f9ae3 52%, #39a9ea); --primary-line: #1a7fc0; --primary-text: #fff;
+    --input: #fff; --input-line: #b4bbc2;
+    --key: linear-gradient(#ffffff, #e9edf0); --key-line: #b4bbc2;
+    --screen: linear-gradient(112deg, #f9fafb 0 38%, #eaeef1 38.4% 62%, #f3f5f7 62.4%);
+    --round: radial-gradient(circle at 50% 28%, #ffffff, #e3e7ea 62%, #c9cfd4); --round-line: #bcc3c9; --round-text: #7a8086;
+    --ok: #2e9e5b; --clock: #6b7178;
+    --picture-ring: 0 0 0 .35em #fff, 0 .15em .7em rgba(0, 0, 0, .18);
+    color: var(--text);
+  }
+  body.dark .wii {
+    --ground: linear-gradient(#17367a, #0a1a44);
+    --stripes: linear-gradient(45deg, rgba(255, 255, 255, .035) 25%, transparent 25%, transparent 75%, rgba(255, 255, 255, .035) 75%);
+    --tile: linear-gradient(#143373, #0d2255);
+    --tile-stripes: repeating-linear-gradient(180deg, #16397e 0 .22em, #10295c .22em .52em);
+    --tile-line: #4f86c6; --tile-shadow: 0 .3em 0 #06112e;
+    --glow: 0 0 0 .25em #ffd21f, 0 0 0 .7em rgba(255, 210, 31, .3), 0 .3em 0 #06112e;
+    --text: #e8f0f8; --muted: #b9d3f2; --title: #ffffff; --big: #ffffff;
+    --blue: #7fb6ec; --blue-deep: #ffd21f; --blue-text: #ffd21f;
+    --bar: #06112e; --bar-hi: #0b1f4f; --bar-line: #4f86c6; --bar-flat: #06112e;
+    --pill: #10295c; --pill-line: #4f86c6; --pill-text: #e8f0f8;
+    --primary: linear-gradient(#fff2a8, #ffe14d 45%, #f5c400 55%, #ffd21f); --primary-line: #6b5a00; --primary-text: #3a3000;
+    --input: #0b1f4f; --input-line: #5d8fd0;
+    --key: #1b3a75; --key-line: #5d8fd0;
+    --screen: linear-gradient(#143373, #0d2255);
+    --round: radial-gradient(circle at 50% 28%, #2a4f80, #143373 62%, #0d2255); --round-line: #4f86c6; --round-text: #ffd21f;
+    --ok: #9df0bd; --clock: #b9d3f2;
+    --picture-ring: 0 0 0 1px #3f6a9c, 0 .7em 1.6em rgba(0, 10, 30, .6);
+  }
+
+  /* ---------- A mock is a 16:9 frame; every size inside is in em, and 1em = 1/80 of its width ---------- */
+  .mock { container-type: inline-size; width: 100%; aspect-ratio: 16 / 9; position: relative; overflow: hidden;
+          border-radius: 14px; box-shadow: 0 2px 6px rgba(0, 0, 0, .12), 0 0 0 1px rgba(0, 0, 0, .06);
+          background: var(--stripes), var(--ground); background-size: auto, 100% 100%; }
+  body.dark .mock { background-size: 56px 56px, 100% 100%; }
+  .mock * { box-sizing: border-box; }
+  .mock .inner { position: absolute; inset: 0; font-size: 1.25cqw; }
+  .mock.small { aspect-ratio: 16 / 9; }
+
+  /* Shared pieces */
+  .pill { font: inherit; font-weight: 800; color: var(--pill-text); background: var(--pill); border: .12em solid var(--pill-line);
+          border-radius: 999px; padding: .45em 1.3em; cursor: pointer; white-space: nowrap;
+          box-shadow: inset 0 .12em 0 rgba(255, 255, 255, .6), 0 .12em .2em rgba(0, 0, 0, .08); }
+  .pill.primary { background: var(--primary); color: var(--primary-text); border-color: var(--primary-line);
+                  box-shadow: inset 0 .12em 0 rgba(255, 255, 255, .45), 0 .12em .2em rgba(0, 0, 0, .12); }
+  .pill.ok { background: linear-gradient(#fff2a8, #ffe14d 45%, #f5c400 55%, #ffd21f); color: #3a3000; border-color: #8a7400;
+             font-style: italic; font-weight: 900; box-shadow: inset 0 .12em 0 rgba(255, 255, 255, .7), 0 .22em 0 #a88800; }
+  .pill.big { font-size: 1.9em; padding: .42em 2.4em; min-width: 10.5em; text-align: center; }
+  .key { display: inline-block; font-size: .85em; font-weight: 800; line-height: 1; color: var(--text); background: var(--key);
+         border: 1px solid var(--key-line); border-bottom-width: .25em; border-radius: .5em; padding: .35em .55em; white-space: nowrap; }
+  .field { font: inherit; color: var(--text); background: var(--input); border: .12em solid var(--input-line); border-radius: .8em;
+           padding: .55em .9em; box-shadow: inset 0 1px 2px rgba(0, 0, 0, .08); }
+  .icon { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .hand { position: absolute; width: 4.2em; height: auto; pointer-events: none; z-index: 5; filter: drop-shadow(0 .15em .25em rgba(0, 0, 0, .3)); }
+
+  /* ---------- A: the channel grid ---------- */
+  .grid { position: absolute; left: 0; right: 0; top: 0; bottom: 29%; display: grid;
+          grid-template-columns: repeat(5, 17.2em); grid-template-rows: repeat(3, 1fr); gap: 1em 1em;
+          padding: 2.6em 0 1.4em 6.6em; }
+  .tile { position: relative; border-radius: 1.35em; background: var(--tile); border: .18em solid var(--tile-line);
+          box-shadow: var(--tile-shadow); display: flex; flex-direction: column; align-items: center; justify-content: center;
+          gap: .45em; cursor: pointer; overflow: hidden; color: var(--blue-text); text-align: center; transition: box-shadow .15s; }
+  .tile.ch { background: var(--tile-stripes); }
+  .tile.ch .icon { width: 3.2em; height: 3.2em; stroke-width: 1.8; color: var(--blue-deep); }
+  .tile.ch b { font-size: 1.15em; font-weight: 800; line-height: 1.1; }
+  .tile.empty { cursor: default; background: var(--tile); }
+  .tile.empty::after { content: ''; position: absolute; left: 50%; top: 18%; width: 2.2em; height: 64%; transform: translateX(-50%);
+                       background: radial-gradient(ellipse 50% 50% at 50% 50%, #cfd5da, transparent 70%); opacity: .9; }
+  body.dark .tile.empty::after { background: radial-gradient(ellipse 50% 50% at 50% 50%, #2a4f80, transparent 70%); }
+  .tile:hover:not(.empty), .tile.selected { box-shadow: var(--glow); border-color: #9ad9ff; }
+  body.dark .tile:hover:not(.empty), body.dark .tile.selected { border-color: #ffd21f; }
+  .tile.selected { animation: pulse 1.8s ease-in-out infinite; }
+  @keyframes pulse { 50% { box-shadow: 0 0 0 .22em #c9ebff, 0 0 0 .4em #8fd4ff, 0 0 2.6em #8fd4ff; } }
+  body.dark .tile.selected { animation: none; }
+  @media (prefers-reduced-motion: reduce) { .tile.selected { animation: none; } }
+  /* The Disc Channel: the game, and where Start lives. Nothing from the disc is shown, only a drawn disc. */
+  .tile.disc { background: linear-gradient(160deg, #ffffff, #eef4f8 60%, #dfe9f1); padding: .5em .6em 1.3em; justify-content: flex-start; gap: .25em; }
+  body.dark .tile.disc { background: linear-gradient(#143373, #0d2255); }
+  .tile.disc .label { font-size: 1.05em; font-weight: 900; font-style: italic; color: #3b4a58; line-height: 1.1; }
+  body.dark .tile.disc .label { color: #fff; }
+  .tile.disc .label small { display: block; font-size: .7em; font-style: normal; font-weight: 800; color: var(--blue-text); }
+  .tile.disc .disc-art { width: 3.4em; height: 3.4em; margin-top: 0; }
+  .tile.disc .prog { position: absolute; left: 1.6em; right: 1.6em; bottom: .7em; height: .45em; border-radius: 999px; background: #c9d4dd; overflow: hidden; }
+  body.dark .tile.disc .prog { background: #1b3a75; }
+  .tile.disc .prog i { display: block; width: 62%; height: 100%; background: var(--blue-deep); border-radius: 999px; }
+  .tile.disc .pct { position: absolute; right: 1.6em; bottom: 1.4em; font-size: .75em; font-weight: 800; color: var(--muted); }
+  .tile.disc .slot-art, .tile.disc .disc-art { flex: none; width: 3.4em; height: 3.4em; }
+  .tile.disc.none .disc-art, .tile.disc:not(.none) .slot-art, .tile.disc.none .prog, .tile.disc.none .pct { display: none; }
+  .tile.disc.none .label small { color: var(--muted); }
+  /* A2: four columns, two rows, no empties; the Disc Channel takes a 2 x 2 block. */
+  .grid2 { position: absolute; left: 0; right: 0; top: 0; bottom: 29%; display: grid; grid-template-columns: repeat(4, 1fr);
+           grid-template-rows: repeat(2, 1fr); gap: 1.1em; padding: 2.4em 6em 1.2em; }
+  .grid2 .tile.disc { grid-column: 1 / 3; grid-row: 1 / 3; justify-content: center; gap: .9em; padding: 1.4em 1.4em 3em; }
+  .grid2 .tile.disc .slot-art, .grid2 .tile.disc .disc-art { width: 9.5em; height: 9.5em; }
+  .grid2 .tile.disc .label { font-size: 1.9em; }
+  .grid2 .tile.disc .label small { font-size: .62em; }
+  .grid2 .tile.disc .prog { left: 3em; right: 3em; bottom: 1.5em; height: .65em; }
+  .grid2 .tile.disc .pct { right: 3em; bottom: 2.5em; font-size: 1em; }
+  .grid2 .tile.ch .icon { width: 4.2em; height: 4.2em; }
+  .grid2 .tile.ch b { font-size: 1.4em; }
+  .page-arrow { position: absolute; right: 2.4em; top: 34%; width: 0; height: 0; border: 2.2em solid transparent; border-right: 0;
+                border-left: 3em solid var(--blue); filter: drop-shadow(0 .1em .1em rgba(0, 0, 0, .15)); opacity: .9; }
+  /* The curved bar: a bay in the middle for the clock, round buttons on the line left and right. */
+  .bar { position: absolute; left: 0; right: 0; bottom: 0; height: 31%; }
+  .bar svg.wave { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .round { position: absolute; bottom: 7%; width: 8.4em; height: 8.4em; border-radius: 50%; display: grid; place-items: center;
+           background: var(--round); border: .22em solid var(--round-line); color: var(--round-text); cursor: pointer;
+           font-size: 1em; font-weight: 900; box-shadow: 0 .3em .5em rgba(0, 0, 0, .18), inset 0 .25em .3em #fff; }
+  body.dark .round { box-shadow: 0 .3em 0 #06112e; }
+  .round.wii { left: 4.2em; font-size: 1.1em; }
+  .round.wii span { font-size: 2em; letter-spacing: -.02em; }
+  .round.mail { right: 4.2em; }
+  .round.mail svg { width: 4em; height: 4em; stroke-width: 1.6; }
+  .round .badge { position: absolute; right: .6em; bottom: .5em; min-width: 1.8em; height: 1.8em; border-radius: 999px;
+                  background: var(--blue-deep); color: #fff; font-size: 1em; font-weight: 900; display: grid; place-items: center;
+                  border: .15em solid #fff; }
+  .disc-chip { position: absolute; left: 15.5em; bottom: 24%; display: flex; flex-direction: column; align-items: center; gap: .2em;
+               color: var(--blue-text); font-weight: 800; font-size: .95em; }
+  .disc-chip svg { width: 2.8em; height: 2.8em; }
+  .clock { position: absolute; left: 50%; top: 3%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; }
+  .clock .digits { display: flex; align-items: baseline; gap: .6em; color: var(--clock); }
+  .clock .digits svg { height: 4.2em; width: auto; fill: currentColor; }
+  .clock .ampm { font-size: 1.4em; font-weight: 800; }
+  .clock .date { margin-top: 1.6em; font-size: 2.2em; font-weight: 700; color: var(--clock); letter-spacing: .02em; }
+  /* The channel screen: white, big rounded text, a grey bar with Wii Menu and Start. */
+  .channel { position: absolute; inset: 0; display: none; flex-direction: column; z-index: 4; }
+  .channel.open { display: flex; }
+  .channel .screen { flex: 1; background: var(--screen); display: flex; flex-direction: column; align-items: center;
+                     justify-content: center; text-align: center; gap: 1.2em; padding: 2em 5em; position: relative; }
+  .channel .screen::after { content: ''; position: absolute; inset: 0; background: var(--stripes); opacity: .5; pointer-events: none; }
+  .channel .screen > * { position: relative; z-index: 1; }
+  .channel .screen .big-text { font-family: Quicksand, Nunito, sans-serif; font-weight: 600; font-size: 5.6em; line-height: 1.05;
+                               color: var(--big); letter-spacing: -.01em; margin: 0; }
+  .channel .screen h3 { font-family: Quicksand, Nunito, sans-serif; font-weight: 700; font-size: 3em; margin: 0; color: var(--big); }
+  .channel .screen p { margin: 0; font-size: 1.3em; color: var(--muted); max-width: 44em; }
+  .channel .screen .row { display: flex; gap: 1em; align-items: center; justify-content: center; flex-wrap: wrap; font-size: 1.2em; }
+  .channel .screen .keys { display: grid; grid-template-columns: auto 1fr auto 1fr; gap: .7em 1.2em; align-items: center;
+                           text-align: left; font-size: 1.15em; }
+  .channel .screen .keys span { color: var(--muted); }
+  .channel .screen .disc-row { display: flex; align-items: center; gap: 3em; text-align: left; max-width: 70em; }
+  .channel .screen .disc-row svg { width: 13em; height: 13em; flex: none; }
+  .channel .screen .disc-row .big-text { font-size: 4.2em; margin-bottom: .15em; }
+  .channel .screen .disc-row p { margin-bottom: 1em; }
+  .channel .screen .drop { font-size: 1.1em; color: var(--muted); font-weight: 700; }
+  .screen-bar { height: 27%; background: linear-gradient(var(--bar-hi), var(--bar) 25%); border-top: .15em solid var(--tile-line);
+                display: flex; align-items: center; justify-content: center; gap: 4em; position: relative; }
+  body.dark .screen-bar { border-top-color: #4f86c6; }
+
+  /* ---------- B: the current layout, retinted ---------- */
+  .b-head { position: absolute; left: 0; right: 0; top: 0; display: flex; align-items: center; justify-content: space-between;
+            padding: 2em 3.6em; }
+  .b-head h1 { margin: 0; font-size: 2.9em; font-weight: 900; font-style: italic; color: var(--title); line-height: 1.1;
+               text-shadow: 0 .06em 0 #fff; }
+  body.dark .b-head h1 { text-shadow: 0 .08em 0 #06112e; }
+  .b-head h1 span { margin-left: .4em; font-size: .43em; font-weight: 800; color: var(--blue-text); }
+  .b-tools { display: flex; align-items: center; gap: .9em; font-size: 1.05em; }
+  .chip { display: inline-flex; align-items: center; gap: .4em; font-weight: 800; color: var(--ok); }
+  .chip svg { width: 1.3em; height: 1.3em; stroke-width: 3; }
+  .b-body { position: absolute; left: 3.6em; right: 3.6em; top: 9.4em; bottom: 9.8em; display: grid;
+            grid-template-columns: minmax(0, 5fr) minmax(0, 8fr); gap: 2.2em; }
+  .b-nav { display: flex; flex-direction: column; gap: 1em; }
+  .b-nav button { flex: 1; display: flex; align-items: center; gap: 1.2em; padding: .6em 1.4em; border-radius: 1.5em; cursor: pointer;
+                  background: var(--tile); border: .18em solid var(--tile-line); box-shadow: var(--tile-shadow); color: var(--text);
+                  font: inherit; text-align: left; }
+  .b-nav button[aria-current="true"] { box-shadow: var(--glow); border-color: #9ad9ff; background: var(--tile-stripes); }
+  body.dark .b-nav button[aria-current="true"] { border-color: #ffd21f; }
+  .b-nav .sq { flex: none; display: grid; place-items: center; width: 3.6em; height: 3.6em; border-radius: 1em;
+               background: var(--blue-deep); color: #fff; }
+  body.dark .b-nav .sq { background: #12305f; color: #ffd21f; }
+  .b-nav .sq svg { width: 2em; height: 2em; }
+  .b-nav b { display: block; font-size: 1.45em; font-weight: 900; line-height: 1.1; color: var(--title); }
+  .b-nav small { display: block; font-size: .95em; font-weight: 700; color: var(--muted); }
+  .b-panel { border-radius: 1.8em; background: var(--tile); border: .18em solid var(--tile-line); box-shadow: var(--tile-shadow);
+             display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 1em;
+             padding: 2em; position: relative; }
+  .b-panel h2 { margin: 0; font-family: Quicksand, Nunito, sans-serif; font-weight: 600; font-size: 3.4em; color: var(--big); }
+  .b-panel p { margin: 0; color: var(--muted); font-size: 1.1em; }
+  .b-foot { position: absolute; left: 0; right: 0; bottom: 0; height: 9.2em; }
+  .b-foot svg.wave { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .b-foot .desc { position: absolute; left: 3.6em; bottom: 1.9em; font-size: 1.25em; font-weight: 800; color: var(--text); }
+  .b-foot .load { position: absolute; right: 3.6em; bottom: 2em; display: flex; align-items: center; gap: .9em; font-weight: 700;
+                  color: var(--muted); font-size: 1em; }
+  .b-foot .load i { display: block; width: 11em; height: .7em; border-radius: 999px; background: var(--bar-hi); border: 1px solid var(--tile-line); overflow: hidden; }
+  .b-foot .load i::after { content: ''; display: block; width: 62%; height: 100%; background: var(--blue-deep); }
+
+  /* B before the disc: the disc card alone, centred, no column of choices. */
+  .b-disc { position: absolute; left: 3.6em; right: 3.6em; top: 9.4em; bottom: 9.8em; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; gap: 1.6em; }
+  .b-disc[hidden], .b-body[hidden] { display: none; }
+  .b-disc .card { width: min(66em, 100%); display: flex; align-items: center; gap: 3em; padding: 2.4em 3em; border-radius: 2em;
+                  background: var(--tile); border: .18em solid var(--tile-line); box-shadow: var(--tile-shadow); text-align: left; }
+  .b-disc .card svg { width: 12em; height: 12em; flex: none; }
+  .b-disc h2 { margin: 0 0 .2em; font-family: Quicksand, Nunito, sans-serif; font-weight: 600; font-size: 3em; color: var(--big); }
+  .b-disc p { margin: 0 0 1.1em; color: var(--muted); font-size: 1.15em; max-width: 36em; }
+  .b-disc .row { display: flex; gap: .8em; align-items: center; flex-wrap: wrap; font-size: 1.15em; }
+  .b-disc .status { margin: 1em 0 0; font-size: 1em; }
+  .b-disc .tag { color: var(--muted); font-weight: 700; font-size: 1.2em; }
+
+  /* ---------- D: B's disc page, then two tiles with the tools in the bar ---------- */
+  .d-grid { position: absolute; left: 6em; right: 6em; top: 9.6em; bottom: 31%; display: grid; grid-template-columns: 1fr 1fr;
+            gap: 1.8em; padding-bottom: 1.4em; }
+  .d-grid[hidden], .bar[hidden] { display: none; }
+  .d-grid .tile.ch { gap: .6em; transition: transform .18s ease, box-shadow .18s ease; transform-origin: center; }
+  .d-grid .tile.ch:hover { transform: scale(1.035); }
+  .d-grid .tile.ch .logo { width: 13em; height: 7.5em; color: var(--blue-deep); }
+  .d-grid .tile.ch b { font-size: 2.3em; }
+  .d-grid .tile.ch small { font-size: 1.2em; font-weight: 700; color: var(--muted); }
+  .d-bar .round { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .05em;
+                  transition: transform .18s ease; }
+  .d-bar .round:hover { transform: scale(1.06); }
+  .d-bar .round svg { width: 3.4em; height: 3.4em; stroke-width: 1.8; color: var(--blue-text); }
+  .d-bar .round span { font-size: 1em; font-weight: 800; color: var(--round-text); }
+  .d-bar .round.r1 { left: 4.2em; } .d-bar .round.r3 { right: 4.2em; }
+  .d-bar .round.rc { left: 50%; margin-left: -4.2em; bottom: 9%; }
+  .d-bar .round.rc:hover { transform: scale(1.06); }
+  .d-bar .dload { position: absolute; left: 50%; top: 9%; transform: translateX(-50%); display: flex; align-items: center; gap: .8em;
+                  font-size: 1.15em; font-weight: 800; color: var(--clock); white-space: nowrap; }
+  .d-bar .dload i { width: 12em; height: .7em; border-radius: 999px; background: var(--bar-hi); border: 1px solid var(--tile-line); overflow: hidden; }
+  .d-bar .dload i::after { content: ''; display: block; width: 62%; height: 100%; background: var(--blue-deep); }
+  body.dark .d-bar .dload i { background: #1b3a75; border-color: #4f86c6; }
+
+  /* ---------- C: in the game ---------- */
+  .c-stage { position: absolute; left: 1em; top: 1em; bottom: 1em; right: 25.5em; }
+  .c-picture { position: absolute; inset: 0; border-radius: 1.3em; background: #0b0c10; box-shadow: var(--picture-ring);
+               display: grid; place-items: center; color: #5a6470; font-weight: 800; font-size: 1.3em; overflow: hidden; }
+  .c-picture::before { content: ''; position: absolute; left: 12.5%; right: 12.5%; top: 0; bottom: 0;
+                       background: linear-gradient(#2a4a77, #6aa1d8 55%, #4e7a3a 56%, #2f5222); opacity: .9; }
+  .c-picture span { position: relative; color: #fff; text-shadow: 0 1px 2px #000; }
+  .c-show { position: absolute; top: 1.6em; right: 1.6em; }
+  .c-aside { position: absolute; top: 1em; bottom: 1em; right: 1em; width: 23.5em; border-radius: 1.3em; padding: 1.3em 1.4em;
+             background: var(--tile); border: .18em solid var(--tile-line); box-shadow: var(--tile-shadow); overflow: hidden; }
+  .c-aside .head { display: flex; align-items: center; justify-content: space-between; gap: .5em; }
+  .c-aside h2 { margin: 0; font-size: 1.3em; font-weight: 900; color: var(--title); }
+  .c-aside h3 { font-size: .85em; letter-spacing: .1em; text-transform: uppercase; color: var(--blue-text); margin: 1.3em 0 .5em; font-weight: 800; }
+  .c-aside .actions { display: flex; gap: .4em; }
+  .c-aside .pill { font-size: .9em; padding: .35em .9em; }
+  .c-aside dl { display: grid; grid-template-columns: auto 1fr; gap: .5em .8em; margin: 0; align-items: center; font-size: .95em; }
+  .c-aside dt { display: flex; gap: .3em; } .c-aside dd { margin: 0; color: var(--muted); }
+  .c-aside .mini-round { width: 2.6em; height: 2.6em; border-radius: 50%; border: .12em solid var(--round-line); background: var(--round);
+                         color: var(--round-text); font-weight: 900; font-size: .8em; display: grid; place-items: center; cursor: pointer; }
+  .c-aside .slider { height: .6em; border-radius: 999px; background: var(--bar-hi); border: 1px solid var(--tile-line); position: relative; margin: .6em 0; }
+  .c-aside .slider::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 72%; border-radius: 999px; background: var(--blue-deep); }
+  .c-aside .slider::after { content: ''; position: absolute; left: 72%; top: 50%; width: 1.4em; height: 1.4em; border-radius: 50%; transform: translate(-50%, -50%);
+                            background: var(--round); border: .12em solid var(--round-line); }
+  .c-aside .roster { margin: .3em 0 0; padding: 0; list-style: none; font-size: .95em; }
+  .c-aside .roster li { display: flex; gap: .5em; align-items: center; padding: .25em 0; }
+  .c-aside .roster li::before { content: ''; width: .55em; height: .55em; border-radius: 50%; background: #3fbf6f; }
+  .c-aside .roster .you { margin-left: auto; color: var(--muted); font-size: .9em; }
+
+  /* ---------- Tokens and components sheet ---------- */
+  .sheet { border-radius: 14px; padding: 24px; background: var(--stripes), var(--ground); background-size: auto, 100% 100%;
+           box-shadow: 0 2px 6px rgba(0, 0, 0, .12), 0 0 0 1px rgba(0, 0, 0, .06); }
+  body.dark .sheet { background-size: 56px 56px, 100% 100%; }
+  .sheet h3 { font-size: 13px; letter-spacing: .1em; text-transform: uppercase; color: var(--blue-text); margin: 22px 0 10px; }
+  .sheet h3:first-child { margin-top: 0; }
+  .swatches { display: flex; flex-wrap: wrap; gap: 10px; }
+  .sw { width: 128px; border-radius: 12px; overflow: hidden; background: #fff; border: 1px solid var(--tile-line); font-size: 12px; color: #4b5157; }
+  body.dark .sw { background: #0d2255; color: #e8f0f8; }
+  .sw i { display: block; height: 48px; }
+  .sw b { display: block; padding: 6px 8px 0; }
+  .sw code { display: block; padding: 0 8px 6px; color: #868c92; font-size: 11px; }
+  .comp { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; font-size: 15px; }
+  .comp .round { position: static; width: 72px; height: 72px; }
+  .comp .page-arrow { position: static; border-width: 18px 0 18px 26px; }
+  .comp .hand { position: static; width: 44px; }
+  .type-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+  .type-card { background: var(--tile); border: .18em solid var(--tile-line); border-radius: 16px; padding: 16px 20px; color: var(--big); }
+  .type-card .sample { font-size: 38px; line-height: 1.05; font-weight: 600; margin: 4px 0 8px; }
+  .type-card small { color: var(--muted); font-weight: 700; }
+  .type-card.nunito .sample { font-family: Nunito; font-weight: 800; }
+  .type-card.quick .sample { font-family: Quicksand; }
+  .type-card.dosis .sample { font-family: Dosis; letter-spacing: .01em; }
+  table.map { border-collapse: collapse; width: 100%; max-width: 900px; font-size: 14px; margin-top: 8px; }
+  table.map th, table.map td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #dfe3e7; vertical-align: top; }
+  table.map th { color: #6f767d; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; }
+  table.map code { background: #e9edf0; border-radius: 5px; padding: 1px 5px; font-size: 13px; }
+  @media (max-width: 640px) { .notes { grid-template-columns: 1fr; } .top { gap: 10px; } }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <!-- A kart, side on, nose to the left: body in the current colour, white helmet, dark wheels. -->
+    <symbol id="kart" viewBox="0 0 80 48">
+      <rect x="52" y="8" width="7" height="14" rx="2.5" fill="currentColor"/>
+      <circle cx="42" cy="15" r="9" fill="currentColor"/>
+      <rect x="34" y="12.5" width="10" height="5" rx="2.5" fill="#fff"/>
+      <path d="M8 26h56a8 8 0 0 1 8 8v4H2v-4a8 8 0 0 1 6-8z" fill="currentColor"/>
+      <rect x="3" y="31" width="14" height="5" rx="2" fill="#fff" opacity=".45"/>
+      <rect x="20" y="22" width="22" height="5" rx="2.5" fill="currentColor"/>
+      <circle cx="20" cy="38" r="8" fill="#3b4a58"/><circle cx="20" cy="38" r="3.5" fill="#fff"/>
+      <circle cx="60" cy="38" r="8" fill="#3b4a58"/><circle cx="60" cy="38" r="3.5" fill="#fff"/>
+    </symbol>
+    <!-- A chequered flag on a pole. -->
+    <symbol id="flag" viewBox="0 0 44 52">
+      <rect x="3" y="2" width="4" height="48" rx="2" fill="#3b4a58"/>
+      <path d="M7 4h34l-4 12 4 12H7z" fill="#fff" stroke="#3b4a58" stroke-width="2.5" stroke-linejoin="round"/>
+      <g fill="#3b4a58">
+        <rect x="8" y="5" width="8" height="7"/><rect x="24" y="5" width="8" height="7"/>
+        <rect x="16" y="12" width="8" height="7"/><rect x="32" y="12" width="7" height="7"/>
+        <rect x="8" y="19" width="8" height="7"/><rect x="24" y="19" width="8" height="7"/>
+      </g>
+    </symbol>
+  </defs>
+</svg>
+<header class="top">
+  <h1>Wii theme ideas</h1>
+  <nav><a href="#a">A · Channel grid</a><a href="#b">B · Same layout, Wii Menu skin</a><a href="#d">D · Two tiles</a><a href="#c">C · In the game</a><a href="#tokens">Tokens</a></nav>
+  <span class="spacer"></span>
+  <button class="toggle" id="theme" aria-pressed="false">Light: Wii Menu · click for the navy dark mode</button>
+</header>
+<main>
+<p class="lede">Three directions, all built on the same two reference frames: the Wii Menu (grey pinstriped ground, white rounded channel tiles, the curved bottom bar with the clock, light-blue accents) and the channel start screen (white, one big line of rounded text, a grey bar with the Wii Menu and Start pills). The toggle at the top flips every mock to the page's current navy-and-yellow, which becomes dark mode: one layout, two skins. The mocks are clickable: tiles open their channel screen, Wii Menu goes back.</p>
+
+<!-- ============================ A ============================ -->
+<section class="idea" id="a">
+  <h2>A · The channel grid <small>the Wii Menu itself as the menu</small></h2>
+  <p class="lede">The four choices become channels. The Disc Channel is the game: it shows the loading bar and its screen holds Start. Play with friends, Controls and Saves are channels of their own; each opens the white start screen with its content and the Wii Menu / Start bar from the second reference. The round Wii button is settings (theme, change disc), the Mail button is Problems (save a log and send it, with a badge when the page has something to report). The clock is real. Empty slots are deliberate: that is what the Wii Menu looks like.</p>
+  <div class="state" id="stateA">Page state: <button aria-pressed="true" data-disc="0">Before the disc</button><button aria-pressed="false" data-disc="1">Disc accepted</button></div>
+  <div class="mock wii" id="mockA">
+    <div class="inner">
+      <div class="grid">
+        <div class="tile disc selected none" data-ch="disc" title="Disc Channel">
+          <span class="label"><span class="label-text">Mario Kart Wii</span><small class="label-sub">Disc Channel</small></span>
+          <svg class="slot-art" viewBox="0 0 100 100" aria-hidden="true">
+            <circle cx="50" cy="50" r="46" fill="#f3f8fd" stroke="#8fd4ff" stroke-width="3" stroke-dasharray="7 6"/>
+            <circle cx="50" cy="50" r="18" fill="none" stroke="#c9ebff" stroke-width="3"/>
+            <circle cx="50" cy="50" r="6" fill="#dbeaf8" stroke="#8fd4ff" stroke-width="2"/>
+            <path d="M50 24v16m0 0-7-7m7 7 7-7" fill="none" stroke="#1f9ae3" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <svg class="disc-art" viewBox="0 0 100 100" aria-hidden="true">
+            <circle cx="50" cy="50" r="46" fill="#dbeaf8" stroke="#fff" stroke-width="3"/>
+            <circle cx="50" cy="50" r="38" fill="none" stroke="#fff" stroke-width="5" opacity=".8"/>
+            <path d="M20 36A34 34 0 0 1 48 16" fill="none" stroke="#fff" stroke-width="8" stroke-linecap="round"/>
+            <circle cx="50" cy="50" r="17" fill="#f3f8fd" stroke="#8fd4ff" stroke-width="2"/>
+            <circle cx="50" cy="50" r="6" fill="#143373"/>
+          </svg>
+          <span class="pct">62%</span>
+          <div class="prog"><i></i></div>
+        </div>
+        <div class="tile ch" data-ch="friends"><svg class="icon" viewBox="0 0 24 24"><path d="M16 19v-1.5a3.5 3.5 0 0 0-3.5-3.5h-5A3.5 3.5 0 0 0 4 17.5V19"/><circle cx="10" cy="8" r="3.5"/><path d="M20 19v-1.5a3.5 3.5 0 0 0-2.5-3.35M15 4.7a3.5 3.5 0 0 1 0 6.6"/></svg><b>Play with friends</b></div>
+        <div class="tile ch" data-ch="controls"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2.5"/><path d="M7 10h.01M11 10h.01M15 10h.01M7 14h10"/></svg><b>Controls</b></div>
+        <div class="tile ch" data-ch="saves"><svg class="icon" viewBox="0 0 24 24"><path d="M12 4v10m0 0-4-4m4 4 4-4M5 19h14"/></svg><b>Saves</b></div>
+        <div class="tile empty"></div>
+        <div class="tile empty"></div><div class="tile empty"></div><div class="tile empty"></div><div class="tile empty"></div><div class="tile empty"></div>
+        <div class="tile empty"></div><div class="tile empty"></div><div class="tile empty"></div><div class="tile empty"></div><div class="tile empty"></div>
+      </div>
+      <div class="page-arrow" title="More channels"></div>
+      <div class="bar">
+        <svg class="wave" viewBox="0 0 1200 200" preserveAspectRatio="none" aria-hidden="true">
+          <defs><linearGradient id="barg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--bar-hi)"/><stop offset=".3" stop-color="var(--bar)"/><stop offset="1" stop-color="var(--bar)"/></linearGradient></defs>
+          <path d="M0 62 C 230 62 330 132 600 132 C 870 132 970 62 1200 62 V 200 H 0 Z" fill="url(#barg)"/>
+          <path d="M0 62 C 230 62 330 132 600 132 C 870 132 970 62 1200 62" fill="none" stroke="var(--bar-line)" stroke-width="4" vector-effect="non-scaling-stroke"/>
+          <path d="M0 68 C 230 68 330 138 600 138 C 870 138 970 68 1200 68" fill="none" stroke="#fff" stroke-opacity=".7" stroke-width="2" vector-effect="non-scaling-stroke"/>
+        </svg>
+        <button class="round wii" title="Settings: theme, change disc" data-ch="settings"><span>Wii</span></button>
+        <div class="disc-chip" title="Your disc image is accepted">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="#e6f3fb" stroke="#2b8fd1" stroke-width="1.6"/><circle cx="12" cy="12" r="2.4" fill="#2b8fd1"/><path d="M15.5 17.5l2 2 4-4" fill="none" stroke="#2e9e5b" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span>NTSC-U</span>
+        </div>
+        <div class="clock">
+          <div class="digits"><svg class="seg-clock" viewBox="0 0 90 24"></svg><span class="ampm">PM</span></div>
+          <div class="date">Tue 11/10</div>
+        </div>
+        <button class="round mail" title="Problems: save and send a log" data-ch="problems">
+          <svg class="icon" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3.5 7.5 12 13l8.5-5.5"/></svg>
+          <i class="badge">1</i>
+        </button>
+      </div>
+      <svg class="hand" viewBox="0 0 40 48" aria-hidden="true"></svg>
+      <!-- Channel screens -->
+      <div class="channel">
+        <div class="screen"></div>
+        <div class="screen-bar"></div>
+      </div>
+    </div>
+  </div>
+  <ul class="notes">
+    <li><b>What changes.</b> New markup for the grid and the channel screens; the existing ids (room panel, bindings, saves, Start, status) move inside the screens unchanged, so the scripts keep working.</li>
+    <li><b>Loading.</b> The Disc Channel tile carries the game's loading bar; its screen's Start pill is greyed until the game and disc are ready, exactly as now.</li>
+    <li><b>Why the empties.</b> They are the look. A 4 × 2 grid with larger tiles is the fallback if the page needs them bigger at laptop sizes.</li>
+    <li><b>Joining by invite link.</b> Opens straight onto the Play with friends screen, with the grid behind it.</li>
+    <li><b>Before the disc.</b> The page opens on the Disc Channel's screen, as it does today, with the grid behind it. A real Wii with no disc shows the same tile asking for one, so the empty slot is the honest Wii picture of this state.</li>
+  </ul>
+
+  <h2 style="margin-top: 40px">A2 · The compact grid <small>no empty slots, the disc as the main tile</small></h2>
+  <p class="lede">Four columns, two rows, nothing empty. The Disc Channel takes a double-size block on the left, with a bigger disc and the loading bar across its bottom, and the four small channels sit beside it: Play with friends, Controls, Saves and Problems. With Problems as a tile, the Mail button becomes the room: it carries a badge when an invite link brought you here or friends are in your room. No page arrow, since there is only one page.</p>
+  <div class="state" id="stateA2">Page state: <button aria-pressed="true" data-disc="0">Before the disc</button><button aria-pressed="false" data-disc="1">Disc accepted</button></div>
+  <div class="mock wii" id="mockA2">
+    <div class="inner">
+      <div class="grid2">
+        <div class="tile disc selected none" data-ch="disc" title="Disc Channel">
+          <span class="label"><span class="label-text">Mario Kart Wii</span><small class="label-sub">Disc Channel</small></span>
+          <svg class="slot-art" viewBox="0 0 100 100" aria-hidden="true">
+            <circle cx="50" cy="50" r="46" fill="#f3f8fd" stroke="#8fd4ff" stroke-width="3" stroke-dasharray="7 6"/>
+            <circle cx="50" cy="50" r="18" fill="none" stroke="#c9ebff" stroke-width="3"/>
+            <circle cx="50" cy="50" r="6" fill="#dbeaf8" stroke="#8fd4ff" stroke-width="2"/>
+            <path d="M50 24v16m0 0-7-7m7 7 7-7" fill="none" stroke="#1f9ae3" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <svg class="disc-art" viewBox="0 0 100 100" aria-hidden="true">
+            <circle cx="50" cy="50" r="46" fill="#dbeaf8" stroke="#fff" stroke-width="3"/>
+            <circle cx="50" cy="50" r="38" fill="none" stroke="#fff" stroke-width="5" opacity=".8"/>
+            <path d="M20 36A34 34 0 0 1 48 16" fill="none" stroke="#fff" stroke-width="8" stroke-linecap="round"/>
+            <circle cx="50" cy="50" r="17" fill="#f3f8fd" stroke="#8fd4ff" stroke-width="2"/>
+            <circle cx="50" cy="50" r="6" fill="#143373"/>
+          </svg>
+          <span class="pct">62%</span>
+          <div class="prog"><i></i></div>
+        </div>
+        <div class="tile ch" data-ch="friends"><svg class="icon" viewBox="0 0 24 24"><path d="M16 19v-1.5a3.5 3.5 0 0 0-3.5-3.5h-5A3.5 3.5 0 0 0 4 17.5V19"/><circle cx="10" cy="8" r="3.5"/><path d="M20 19v-1.5a3.5 3.5 0 0 0-2.5-3.35M15 4.7a3.5 3.5 0 0 1 0 6.6"/></svg><b>Play with friends</b></div>
+        <div class="tile ch" data-ch="controls"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2.5"/><path d="M7 10h.01M11 10h.01M15 10h.01M7 14h10"/></svg><b>Controls</b></div>
+        <div class="tile ch" data-ch="saves"><svg class="icon" viewBox="0 0 24 24"><path d="M12 4v10m0 0-4-4m4 4 4-4M5 19h14"/></svg><b>Saves</b></div>
+        <div class="tile ch" data-ch="problems"><svg class="icon" viewBox="0 0 24 24"><path d="M12 3.5 2.5 20h19L12 3.5z"/><path d="M12 10v4M12 17h.01"/></svg><b>Problems</b></div>
+      </div>
+      <div class="bar">
+        <svg class="wave" viewBox="0 0 1200 200" preserveAspectRatio="none" aria-hidden="true">
+          <path d="M0 62 C 230 62 330 132 600 132 C 870 132 970 62 1200 62 V 200 H 0 Z" fill="url(#barg)"/>
+          <path d="M0 62 C 230 62 330 132 600 132 C 870 132 970 62 1200 62" fill="none" stroke="var(--bar-line)" stroke-width="4" vector-effect="non-scaling-stroke"/>
+          <path d="M0 68 C 230 68 330 138 600 138 C 870 138 970 68 1200 68" fill="none" stroke="#fff" stroke-opacity=".7" stroke-width="2" vector-effect="non-scaling-stroke"/>
+        </svg>
+        <button class="round wii" title="Settings: theme, change disc" data-ch="settings"><span>Wii</span></button>
+        <div class="disc-chip" title="Your disc image is accepted">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="#e6f3fb" stroke="#2b8fd1" stroke-width="1.6"/><circle cx="12" cy="12" r="2.4" fill="#2b8fd1"/><path d="M15.5 17.5l2 2 4-4" fill="none" stroke="#2e9e5b" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span>NTSC-U</span>
+        </div>
+        <div class="clock">
+          <div class="digits"><svg class="seg-clock" viewBox="0 0 90 24"></svg><span class="ampm">PM</span></div>
+          <div class="date">Tue 11/10</div>
+        </div>
+        <button class="round mail" title="Your room: invites and who is in it" data-ch="friends">
+          <svg class="icon" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3.5 7.5 12 13l8.5-5.5"/></svg>
+          <i class="badge">2</i>
+        </button>
+      </div>
+      <svg class="hand" viewBox="0 0 40 48" aria-hidden="true"></svg>
+      <div class="channel">
+        <div class="screen"></div>
+        <div class="screen-bar"></div>
+      </div>
+    </div>
+  </div>
+  <ul class="notes">
+    <li><b>What it gives up.</b> The faithful 4 × 3 grid and its page arrow. What it gains: every slot does something, and the disc is clearly the main thing on the page.</li>
+    <li><b>The big tile.</b> Before the disc it is the slot asking for one; after, the disc with the loading bar, and its screen holds Start. Clicking anywhere on it opens that screen.</li>
+    <li><b>Problems as a tile.</b> Frees the Mail button for the room, which is what a badge on an envelope suggests anyway.</li>
+  </ul>
+</section>
+
+<!-- ============================ B ============================ -->
+<section class="idea" id="b">
+  <h2>B · Same layout, Wii Menu skin <small>the cheapest path: a token swap</small></h2>
+  <p class="lede">Nothing moves. The header, the four-choice column, the panel and the footer stay where they are; only the colours, the ground, the tile borders and the footer's shape change. The selected choice gets the light-blue glow instead of the yellow ring, the footer becomes the curved bar with the loading line in Wii blue, and the panel's heading takes the big rounded type of the start screen. Start here is a Wii-blue glossy pill; the tokens sheet below shows the white and yellow options.</p>
+  <div class="state" id="stateB">Page state: <button aria-pressed="true" data-disc="0">Before the disc</button><button aria-pressed="false" data-disc="1">Disc accepted</button></div>
+  <div class="mock wii" id="mockB">
+    <div class="inner">
+      <header class="b-head">
+        <h1>Mario Kart Wii <span>in your browser</span></h1>
+        <div class="b-tools">
+          <span class="chip b-after"><svg class="icon" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>NTSC-U disc</span>
+          <button class="pill b-after">Change disc</button>
+          <button class="pill">Problems</button>
+        </div>
+      </header>
+      <div class="b-disc" id="bdisc">
+        <div class="card">
+          <svg viewBox="0 0 100 100" aria-hidden="true">
+            <circle cx="50" cy="50" r="46" fill="#f3f8fd" stroke="#8fd4ff" stroke-width="3" stroke-dasharray="7 6"/>
+            <circle cx="50" cy="50" r="18" fill="none" stroke="#c9ebff" stroke-width="3"/>
+            <circle cx="50" cy="50" r="6" fill="#dbeaf8" stroke="#8fd4ff" stroke-width="2"/>
+            <path d="M50 24v16m0 0-7-7m7 7 7-7" fill="none" stroke="#1f9ae3" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <div>
+            <h2>Bring your own disc</h2>
+            <p>Choose your own Mario Kart Wii disc image (WBFS, ISO or CISO), or drop it here. It is read on this device and never uploaded.</p>
+            <div class="row"><button class="pill primary big" style="font-size:1.4em">Choose disc image…</button></div>
+            <p class="status">No disc image chosen yet.</p>
+            <button class="pill" style="font-size:.95em">Clear local game data</button>
+          </div>
+        </div>
+        <p class="tag">Solo or online with friends. Keyboard and mouse, or a game controller.</p>
+      </div>
+      <div class="b-body" id="bbody" hidden>
+        <nav class="b-nav" id="bnav">
+          <button aria-current="true" data-p="solo"><span class="sq"><svg class="icon" viewBox="0 0 24 24"><path d="M5 21V4M5 4h12l-2.5 4 2.5 4H5"/></svg></span><span><b>Solo</b><small>Race on your own</small></span></button>
+          <button aria-current="false" data-p="friends"><span class="sq"><svg class="icon" viewBox="0 0 24 24"><path d="M16 19v-1.5a3.5 3.5 0 0 0-3.5-3.5h-5A3.5 3.5 0 0 0 4 17.5V19"/><circle cx="10" cy="8" r="3.5"/><path d="M20 19v-1.5a3.5 3.5 0 0 0-2.5-3.35M15 4.7a3.5 3.5 0 0 1 0 6.6"/></svg></span><span><b>Play with friends</b><small>Create a room or enter an invite code</small></span></button>
+          <button aria-current="false" data-p="controls"><span class="sq"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2.5"/><path d="M7 10h.01M11 10h.01M15 10h.01M7 14h10"/></svg></span><span><b>Controls</b><small>Keyboard, mouse or a controller</small></span></button>
+          <button aria-current="false" data-p="saves"><span class="sq"><svg class="icon" viewBox="0 0 24 24"><path d="M12 4v10m0 0-4-4m4 4 4-4M5 19h14"/></svg></span><span><b>Saves</b><small>Export, import and back up</small></span></button>
+        </nav>
+        <section class="b-panel" id="bpanel"></section>
+      </div>
+      <footer class="b-foot">
+        <svg class="wave" viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true">
+          <defs><linearGradient id="bargB" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--bar-hi)"/><stop offset=".35" stop-color="var(--bar)"/><stop offset="1" stop-color="var(--bar)"/></linearGradient></defs>
+          <path d="M0 40 C 230 40 330 10 600 10 C 870 10 970 40 1200 40 V 120 H 0 Z" fill="url(#bargB)"/>
+          <path d="M0 40 C 230 40 330 10 600 10 C 870 10 970 40 1200 40" fill="none" stroke="var(--bar-line)" stroke-width="4" vector-effect="non-scaling-stroke"/>
+        </svg>
+        <p class="desc" id="bdesc">Race on your own</p>
+        <div class="load" id="bload"><span>Loading the game</span><i></i><span>62%</span></div>
+      </footer>
+      <svg class="hand" id="handB" style="left: 45em; top: 24em" viewBox="0 0 40 48" aria-hidden="true"></svg>
+    </div>
+  </div>
+  <ul class="notes">
+    <li><b>What changes.</b> About sixty lines of CSS: the <code>body.pregame #overlay</code> variable block and the disc, nav, panel and footer rules. No markup, no script.</li>
+    <li><b>Before the disc.</b> Same as today: the disc card alone, no column of choices. It is a white tile on the grey ground, with the dashed slot in Wii blue and the big rounded heading.</li>
+    <li><b>Keep or drop the yellow.</b> The yellow OK button is from the game's menus, not the Wii Menu. It still reads well on the light ground as the one thing to press, so it can stay as the Start button in both skins if you prefer it to the blue.</li>
+    <li><b>Type.</b> Panel headings in Quicksand (or Nunito at a lighter weight) give the start-screen feel without a new font for body text.</li>
+  </ul>
+</section>
+
+<!-- ============================ D ============================ -->
+<section class="idea" id="d">
+  <h2>D · Two tiles <small>B before the disc, then Play solo or Play with friends, tools in the bar</small></h2>
+  <p class="lede">Before the disc this is B's page: the disc card alone under the header. Once the disc is accepted the card gives way to two big channel tiles, Play solo and Play with friends, with kart logos that grow a little under the pointer. The curved bar carries three round buttons: Saves on the left, Controls in the middle with a Wii Remote icon, Help on the right. No clock or date; the game's loading line sits in the bay above Controls. The header keeps the title, the disc chip and Change disc. Play solo opens the Ready to race screen with Start; the round buttons open their screens the same way.</p>
+  <div class="state" id="stateD">Page state: <button aria-pressed="true" data-disc="0">Before the disc</button><button aria-pressed="false" data-disc="1">Disc accepted</button></div>
+  <div class="mock wii" id="mockD">
+    <div class="inner">
+      <header class="b-head">
+        <h1>Mario Kart Wii <span>in your browser</span></h1>
+        <div class="b-tools">
+          <span class="chip b-after"><svg class="icon" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>NTSC-U disc</span>
+          <button class="pill b-after">Change disc</button>
+          <button class="pill b-before">Help</button>
+        </div>
+      </header>
+      <div class="b-disc" id="ddisc">
+        <div class="card">
+          <svg viewBox="0 0 100 100" aria-hidden="true">
+            <circle cx="50" cy="50" r="46" fill="#f3f8fd" stroke="#8fd4ff" stroke-width="3" stroke-dasharray="7 6"/>
+            <circle cx="50" cy="50" r="18" fill="none" stroke="#c9ebff" stroke-width="3"/>
+            <circle cx="50" cy="50" r="6" fill="#dbeaf8" stroke="#8fd4ff" stroke-width="2"/>
+            <path d="M50 24v16m0 0-7-7m7 7 7-7" fill="none" stroke="#1f9ae3" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <div>
+            <h2>Bring your own disc</h2>
+            <p>Choose your own Mario Kart Wii disc image (WBFS, ISO or CISO), or drop it here. It is read on this device and never uploaded.</p>
+            <div class="row"><button class="pill primary big" style="font-size:1.4em">Choose disc image…</button></div>
+            <p class="status">No disc image chosen yet.</p>
+            <button class="pill" style="font-size:.95em">Clear local game data</button>
+          </div>
+        </div>
+        <p class="tag">Solo or online with friends. Keyboard and mouse, or a game controller.</p>
+      </div>
+      <footer class="b-foot" id="dfoot">
+        <svg class="wave" viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true">
+          <path d="M0 40 C 230 40 330 10 600 10 C 870 10 970 40 1200 40 V 120 H 0 Z" fill="url(#bargB)"/>
+          <path d="M0 40 C 230 40 330 10 600 10 C 870 10 970 40 1200 40" fill="none" stroke="var(--bar-line)" stroke-width="4" vector-effect="non-scaling-stroke"/>
+        </svg>
+        <p class="desc">You can also drop a disc image anywhere on this page.</p>
+        <div class="load"><span style="color:var(--ok)">Game loaded</span></div>
+      </footer>
+      <div class="d-grid" id="dgrid" hidden>
+        <div class="tile ch" data-ch="solo">
+          <svg class="logo" viewBox="0 0 120 70" aria-hidden="true">
+            <use href="#flag" x="4" y="2" width="44" height="52"/>
+            <use href="#kart" x="36" y="22" width="80" height="48"/>
+          </svg>
+          <b>Play solo</b><small>Race on your own</small></div>
+        <div class="tile ch" data-ch="friends">
+          <svg class="logo" viewBox="0 0 120 70" aria-hidden="true">
+            <use href="#kart" x="2" y="6" width="70" height="42" opacity=".5"/>
+            <use href="#kart" x="36" y="22" width="80" height="48"/>
+          </svg>
+          <b>Play with friends</b><small>Create a room or enter an invite code</small></div>
+      </div>
+      <div class="bar d-bar" id="dbar" hidden>
+        <svg class="wave" viewBox="0 0 1200 200" preserveAspectRatio="none" aria-hidden="true">
+          <path d="M0 62 C 230 62 330 132 600 132 C 870 132 970 62 1200 62 V 200 H 0 Z" fill="url(#barg)"/>
+          <path d="M0 62 C 230 62 330 132 600 132 C 870 132 970 62 1200 62" fill="none" stroke="var(--bar-line)" stroke-width="4" vector-effect="non-scaling-stroke"/>
+          <path d="M0 68 C 230 68 330 138 600 138 C 870 138 970 68 1200 68" fill="none" stroke="#fff" stroke-opacity=".7" stroke-width="2" vector-effect="non-scaling-stroke"/>
+        </svg>
+        <div class="dload"><span>Loading the game</span><i></i><span>62%</span></div>
+        <button class="round r1" data-ch="saves" title="Saves"><svg class="icon" viewBox="0 0 24 24"><path d="M12 4v10m0 0-4-4m4 4 4-4M5 19h14"/></svg><span>Saves</span></button>
+        <button class="round rc" data-ch="controls" title="Controls"><svg class="icon" viewBox="0 0 24 24"><rect x="8.5" y="2" width="7" height="20" rx="2.2"/><path d="M12 6.2v2.6M10.7 7.5h2.6"/><circle cx="12" cy="12.2" r="1.3"/><path d="M12 16h.01M12 19h.01"/></svg><span>Controls</span></button>
+        <button class="round r3" data-ch="help" title="Help"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.6 2.2c-.8.4-1.1.9-1.1 1.8M12 17h.01"/></svg><span>Help</span></button>
+      </div>
+      <svg class="hand" viewBox="0 0 40 48" aria-hidden="true"></svg>
+      <div class="channel">
+        <div class="screen"></div>
+        <div class="screen-bar"></div>
+      </div>
+    </div>
+  </div>
+  <ul class="notes">
+    <li><b>What changes.</b> B's CSS for the disc page, plus new markup for the two tiles and the bar after the disc. The existing room, bindings, saves and problems blocks move into the channel screens unchanged.</li>
+    <li><b>The bar.</b> Three round buttons with an icon and a word each, so they read without hovering: Saves, Controls, Help. Controls takes the centre where the Wii puts its clock.</li>
+    <li><b>Loading.</b> The line in the bay above Controls; once the game is loaded it reads Game loaded and the Play solo screen's Start pill lights up.</li>
+    <li><b>The logos.</b> A kart with a chequered flag for Play solo, two karts for Play with friends, drawn here, not taken from the game.</li>
+    <li><b>Joining by invite link.</b> After the disc, opens straight onto the Play with friends screen over the two tiles.</li>
+  </ul>
+</section>
+
+<!-- ============================ C ============================ -->
+<section class="idea" id="c">
+  <h2>C · In the game <small>the picture as a channel, the controls as a tile</small></h2>
+  <p class="lede">After Start the page is already close to this. The ground gets the pinstripes, the picture keeps its white ring so it sits on the grey like a channel in the grid, and the controls panel is a white tile with the blue section headings. The theme toggle becomes a small round Wii button. Nothing structural changes.</p>
+  <div class="mock wii small" id="mockC">
+    <div class="inner">
+      <div class="c-stage">
+        <div class="c-picture"><span>game picture</span></div>
+        <button class="pill c-show" hidden>Show controls</button>
+      </div>
+      <aside class="c-aside">
+        <div class="head"><h2>Controls</h2><div class="actions"><button class="mini-round" title="Theme">Wii</button><button class="pill">Hide</button></div></div>
+        <h3>Online room</h3>
+        <div style="display:flex; gap:.4em; flex-wrap:wrap"><button class="pill">Copy invite</button><button class="pill">Leave room</button></div>
+        <ul class="roster"><li>mukul <span class="you">you</span></li><li>hiemal</li></ul>
+        <h3>Your game disc</h3>
+        <div class="chip"><svg class="icon" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Mario Kart Wii · NTSC-U</div>
+        <h3>Volume</h3>
+        <div class="slider"></div>
+        <h3>Driving</h3>
+        <dl>
+          <dt><span class="key">A</span><span class="key">D</span></dt><dd>Steer</dd>
+          <dt><span class="key">Left click</span></dt><dd>Accelerate</dd>
+          <dt><span class="key">Space</span></dt><dd>Brake / reverse</dd>
+          <dt><span class="key">Right click</span></dt><dd>Drift, hop</dd>
+          <dt><span class="key">Shift</span></dt><dd>Use item</dd>
+        </dl>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ Tokens ============================ -->
+<section class="idea" id="tokens">
+  <h2>Tokens and pieces <small>the same values the mocks use</small></h2>
+  <div class="sheet wii">
+    <h3>Light: Wii Menu</h3>
+    <div class="swatches">
+      <div class="sw"><i style="background: repeating-linear-gradient(180deg, rgba(255,255,255,.6) 0 1px, transparent 1px 4px), linear-gradient(#f4f5f7, #dde1e5)"></i><b>Ground</b><code>#f4f5f7 → #dde1e5 + 1px/4px stripes</code></div>
+      <div class="sw"><i style="background: #fff; border-bottom: 1px solid #c9cfd4"></i><b>Tile</b><code>#ffffff, line #c9cfd4</code></div>
+      <div class="sw"><i style="background: repeating-linear-gradient(180deg, #e6f3fb 0 3px, #fff 3px 7px)"></i><b>Channel tile</b><code>#e6f3fb stripes on white</code></div>
+      <div class="sw"><i style="background: #6ac8f3"></i><b>Wii blue</b><code>#6ac8f3 (line, arrow)</code></div>
+      <div class="sw"><i style="background: #1f9ae3"></i><b>Blue deep</b><code>#1f9ae3 (icons, primary)</code></div>
+      <div class="sw"><i style="background: #2b8fd1"></i><b>Blue text</b><code>#2b8fd1</code></div>
+      <div class="sw"><i style="background: #8fd4ff; box-shadow: inset 0 0 18px #fff"></i><b>Glow</b><code>#8fd4ff, 2 rings + blur</code></div>
+      <div class="sw"><i style="background: #d8dcdf"></i><b>Bar</b><code>#d8dcdf, line #6ec9f3</code></div>
+      <div class="sw"><i style="background: #4b5157"></i><b>Text</b><code>#4b5157</code></div>
+      <div class="sw"><i style="background: #868c92"></i><b>Muted</b><code>#868c92</code></div>
+      <div class="sw"><i style="background: #5d6267"></i><b>Big type</b><code>#5d6267</code></div>
+      <div class="sw"><i style="background: #2e9e5b"></i><b>OK</b><code>#2e9e5b</code></div>
+    </div>
+    <h3>Pieces</h3>
+    <div class="comp">
+      <button class="pill">Wii Menu</button>
+      <button class="pill primary">Start</button>
+      <button class="pill ok">Start</button>
+      <button class="pill" disabled style="opacity:.55">Loading…</button>
+      <span class="key">Left click</span><span class="key">Space</span><span class="key">↑</span>
+      <input class="field" placeholder="Room code" style="width: 150px">
+      <button class="round wii" style="font-size: 10px"><span>Wii</span></button>
+      <button class="round mail" style="font-size: 10px"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3.5 7.5 12 13l8.5-5.5"/></svg><i class="badge">1</i></button>
+      <span class="page-arrow"></span>
+      <svg class="hand" id="handS" viewBox="0 0 40 48" aria-hidden="true"></svg>
+      <span class="digits" style="color: var(--clock); display:inline-flex; align-items: baseline; gap: 8px"><svg class="seg-clock" viewBox="0 0 90 24" style="height: 34px; fill: currentColor"></svg><b>PM</b></span>
+    </div>
+    <h3>Type for the big lines</h3>
+    <div class="type-row">
+      <div class="type-card nunito"><small>Nunito 800 · already on the page</small><div class="sample">Ready to race.</div><small>Friendly, rounder than the Wii's. Zero cost.</small></div>
+      <div class="type-card quick"><small>Quicksand 600 · used in the mocks</small><div class="sample">Ready to race.</div><small>Closest free match to the start screen's geometric rounded face.</small></div>
+      <div class="type-card dosis"><small>Dosis 600</small><div class="sample">Ready to race.</div><small>Narrower, a touch more like the Wii's system font. Needs its own weight for body text.</small></div>
+    </div>
+  </div>
+  <h3 style="margin: 28px 0 0; font-size: 16px">How the tokens map onto shell.html</h3>
+  <table class="map">
+    <tr><th>Page variable</th><th>Light (new)</th><th>Dark (today's navy)</th></tr>
+    <tr><td><code>--bg</code> + stripes</td><td>#f4f5f7 → #dde1e5, 1px white line every 4px</td><td>#17367a → #0a1a44, diagonal check</td></tr>
+    <tr><td><code>--panel</code> / <code>--line</code></td><td>#ffffff / #c9cfd4</td><td>#143373 / #4f86c6</td></tr>
+    <tr><td><code>--text</code> / <code>--muted</code></td><td>#4b5157 / #868c92</td><td>#e8f0f8 / #b9d3f2</td></tr>
+    <tr><td><code>--accent</code> (focus, selected)</td><td>#8fd4ff glow</td><td>#ffd21f ring</td></tr>
+    <tr><td><code>--primary-bg</code> (Start, Create room)</td><td>Wii blue gloss, or the white pill, or keep yellow</td><td>yellow OK gloss</td></tr>
+    <tr><td><code>--ghost-bg</code> (pills)</td><td>#ffffff → #e4e8eb, line #b4bbc2</td><td>#10295c, line #4f86c6</td></tr>
+    <tr><td><code>--key-bg</code> (key caps)</td><td>#ffffff → #e9edf0, line #b4bbc2</td><td>#1b3a75, line #5d8fd0</td></tr>
+    <tr><td><code>#menu-foot</code></td><td>curved bar #d8dcdf, line #6ec9f3</td><td>flat #06112e, line #4f86c6</td></tr>
+  </table>
+  <p class="hint">Font note: the Wii's own face is Nintendo's and not free. Nunito (loaded already) is the safe body font; Quicksand for headings is a Google font the page would load, or ship in the site folder.</p>
+</section>
+</main>
+
+<script>
+  // ---- Theme toggle: dark is the page's current navy. ----
+  const themeButton = document.getElementById('theme');
+  themeButton.addEventListener('click', () => {
+    const dark = document.body.classList.toggle('dark');
+    themeButton.setAttribute('aria-pressed', String(dark));
+    themeButton.textContent = dark ? 'Dark: today\'s navy · click for the Wii Menu light' : 'Light: Wii Menu · click for the navy dark mode';
+  });
+
+  // ---- The Wii pointer, as an SVG element and as the mouse cursor over the mocks. ----
+  const HAND = `<path d="M14 5c0-2.4 4.4-2.4 4.4 0v14.2h1.8V11c0-2.4 4.4-2.4 4.4 0v8.2h1.8v-5.4c0-2.4 4.2-2.4 4.2 0v6.6h1.6v-3.2c0-2.2 3.8-2.2 3.8 0V29c0 8.6-6 14.5-13.4 14.5h-2.4c-4.8 0-7.6-2.6-10.4-7.2L4.6 29.6c-1.2-2 .8-4.4 3-3.4l6.4 3.6z" fill="#fff" stroke="#2b8fd1" stroke-width="2.4" stroke-linejoin="round"/><circle cx="31" cy="38.5" r="8" fill="#3aa8ea" stroke="#fff" stroke-width="2"/><text x="31" y="42.6" font-size="11.5" font-weight="900" fill="#fff" text-anchor="middle" font-family="Nunito, Arial, sans-serif">1</text>`;
+  for (const el of document.querySelectorAll('svg.hand')) el.innerHTML = HAND;
+  const cursorSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 48" width="40" height="48">${HAND}</svg>`;
+  const cursor = `url("data:image/svg+xml;utf8,${encodeURIComponent(cursorSvg)}") 16 4, pointer`;
+  for (const el of document.querySelectorAll('.mock, .sheet')) el.style.cursor = cursor;
+
+  // ---- Seven-segment clock, the real time. ----
+  const SEG = { 0: 'abcdef', 1: 'bc', 2: 'abdeg', 3: 'abcdg', 4: 'bcfg', 5: 'acdfg', 6: 'acdefg', 7: 'abc', 8: 'abcdefg', 9: 'abcdfg' };
+  function segments(text) {
+    const W = 13, H = 24, t = 3.2, r = 1.3; let x = 0, out = '';
+    const draw = (ox, s) => {
+      const p = { a: [ox + 2, 0, W - 4, t], b: [ox + W - t, 1.6, t, H / 2 - 2.6], c: [ox + W - t, H / 2 + 1, t, H / 2 - 2.6],
+                  d: [ox + 2, H - t, W - 4, t], e: [ox, H / 2 + 1, t, H / 2 - 2.6], f: [ox, 1.6, t, H / 2 - 2.6], g: [ox + 2, H / 2 - t / 2, W - 4, t] };
+      return [...s].map(k => { const [px, py, pw, ph] = p[k]; return `<rect x="${px}" y="${py}" width="${pw}" height="${ph}" rx="${r}"/>`; }).join('');
+    };
+    for (const ch of text) {
+      if (ch === ':') { out += `<rect x="${x + 1}" y="${H * .3}" width="3" height="3" rx="1"/><rect x="${x + 1}" y="${H * .62}" width="3" height="3" rx="1"/>`; x += 7; }
+      else if (ch === ' ') { x += W + 3.5; }
+      else { out += draw(x, SEG[ch]); x += W + 3.5; }
+    }
+    return { out, width: x - 3.5 };
+  }
+  function tick() {
+    const now = new Date();
+    let h = now.getHours(); const pm = h >= 12; h = h % 12 || 12;
+    const text = `${h}:${String(now.getMinutes()).padStart(2, '0')}`;
+    const { out, width } = segments(text);
+    for (const svg of document.querySelectorAll('svg.seg-clock')) { svg.setAttribute('viewBox', `0 0 ${width} 24`); svg.innerHTML = out; }
+    for (const el of document.querySelectorAll('.clock .ampm')) el.textContent = pm ? 'PM' : 'AM';
+    for (const el of document.querySelectorAll('.clock .date')) el.textContent = now.toLocaleDateString('en-US', { weekday: 'short' }) + ' ' + (now.getMonth() + 1) + '/' + now.getDate();
+  }
+  tick(); setInterval(tick, 15000);
+
+  // ---- A: channel screens. ----
+  const SLOT_SVG = `<svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="46" fill="#f3f8fd" stroke="#8fd4ff" stroke-width="3" stroke-dasharray="7 6"/><circle cx="50" cy="50" r="18" fill="none" stroke="#c9ebff" stroke-width="3"/><circle cx="50" cy="50" r="6" fill="#dbeaf8" stroke="#8fd4ff" stroke-width="2"/><path d="M50 24v16m0 0-7-7m7 7 7-7" fill="none" stroke="#1f9ae3" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  const SCREENS = {
+    nodisc: { body: `<div class="disc-row">${SLOT_SVG}<div><p class="big-text">Bring your own disc.</p><p>Choose your own Mario Kart Wii disc image (WBFS, ISO or CISO), or drop it here. It is read on this device and never uploaded.</p><div class="row" style="justify-content:flex-start"><button class="pill primary big" style="font-size:1.5em">Choose disc image…</button><button class="pill">Clear local game data</button></div></div></div><p class="drop">You can also drop a disc image anywhere on this page.</p>`, bar: ['Wii Menu'], hand: ['41em', '20.5em'] },
+    disc: { body: `<p class="big-text">Ready to race.</p><p>Racing friends instead? Open Play with friends before you start.</p>`, bar: ['Wii Menu', 'Start'] },
+    friends: { body: `<h3>Play with friends</h3><div class="row"><button class="pill primary">Create room</button><span style="color:var(--muted)">or enter an invite code</span><input class="field" placeholder="Room code" style="width:12em"><button class="pill">Join room</button></div><p>Create a room and share its link, or enter the code from a friend's invite.</p>`, bar: ['Wii Menu', 'Play online'] },
+    controls: { body: `<h3>Controls</h3><div class="keys"><span class="k"><i class="key">A</i> <i class="key">D</i></span><span>Steer</span><span class="k"><i class="key">Left click</i></span><span>Accelerate</span><span class="k"><i class="key">Space</i></span><span>Brake / reverse</span><span class="k"><i class="key">Right click</i></span><span>Drift, hop</span><span class="k"><i class="key">↑</i></span><span>Trick</span><span class="k"><i class="key">Shift</i></span><span>Use item</span><span class="k"><i class="key">W</i> <i class="key">S</i></span><span>Aim item</span><span class="k"><i class="key">Enter</i></span><span>Pause</span></div><p>Start the game, then click a key to change it. A game controller works too.</p>`, bar: ['Wii Menu', 'Start'] },
+    saves: { body: `<h3>Saves</h3><div class="row"><button class="pill">Export save</button><button class="pill">Export backup</button><button class="pill">Import…</button></div><p>Your saves show here once the game has loaded.</p>`, bar: ['Wii Menu', 'Start'] },
+    settings: { body: `<h3>Settings</h3><div class="row"><button class="pill">Dark theme</button><button class="pill">Change disc</button><button class="pill">Clear local game data</button></div><p>The round Wii button is the Wii's own settings button, so it is the natural home for the theme and the disc.</p>`, bar: ['Wii Menu'] },
+    help: { body: `<h3>Help</h3><p>Low FPS, stutter, a crash or a disconnect? Press Save log straight after it happens, then DM the file to <b>hiemal</b> on Discord with a few words about what you saw.</p><div class="row"><button class="pill primary">Save log</button><label style="color:var(--muted)"><input type="checkbox"> Detailed logging</label></div>`, bar: ['Wii Menu'] },
+    problems: { body: `<h3>Problems</h3><p>Low FPS, stutter, a crash or a disconnect? Press Save log straight after it happens, then DM the file to <b>hiemal</b> on Discord with a few words about what you saw.</p><div class="row"><button class="pill primary">Save log</button><label style="color:var(--muted)"><input type="checkbox"> Detailed logging</label></div>`, bar: ['Wii Menu'] },
+  };
+  function makeChannel(mock, handHome) {
+    const ch = mock.querySelector('.channel'), screen = mock.querySelector('.screen'), bar = mock.querySelector('.screen-bar');
+    const hand = mock.querySelector('.hand');
+    const open = (name) => {
+      const s = SCREENS[name]; if (!s) return;
+      screen.innerHTML = s.body;
+      bar.innerHTML = s.bar.map((label, i) => `<button class="pill big${i ? ' primary' : ''}" data-act="${i ? 'go' : 'back'}">${label}</button>`).join('');
+      ch.classList.add('open');
+      const [hx, hy] = s.hand || [s.bar.length > 1 ? '44.5em' : '38em', '38em'];
+      hand.style.left = hx; hand.style.top = hy;
+    };
+    const home = () => { ch.classList.remove('open'); hand.style.left = handHome[0]; hand.style.top = handHome[1]; };
+    bar.addEventListener('click', (e) => { const b = e.target.closest('button'); if (b && b.dataset.act === 'back') home(); });
+    return { open, home, hand, ch };
+  }
+  const stateButtons = (stateId, d) => { for (const b of document.querySelectorAll('#' + stateId + ' button')) b.setAttribute('aria-pressed', String(!!+b.dataset.disc === d)); };
+  function setupGrid(mockId, stateId, handHome) {
+    const mock = document.getElementById(mockId);
+    const { open: openScreen, home } = makeChannel(mock, handHome);
+    const tile = mock.querySelector('.tile.disc');
+    let hasDisc = false;
+    const open = (name) => openScreen(name === 'disc' && !hasDisc ? 'nodisc' : name);
+    const setState = (d) => {
+      hasDisc = d;
+      tile.classList.toggle('none', !d);
+      tile.querySelector('.label-text').textContent = d ? 'Mario Kart Wii' : 'Disc Channel';
+      tile.querySelector('.label-sub').textContent = d ? 'Disc Channel' : 'Please insert a disc';
+      stateButtons(stateId, d);
+      if (d) home(); else open('disc');
+    };
+    mock.querySelectorAll('[data-ch]').forEach(el => el.addEventListener('click', () => open(el.dataset.ch)));
+    document.getElementById(stateId).addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) setState(!!+b.dataset.disc); });
+    setState(false);
+  }
+  SCREENS.solo = SCREENS.disc;
+  function setupD() {
+    const mock = document.getElementById('mockD');
+    const { open, home, hand, ch } = makeChannel(mock, ['30.5em', '14.5em']);
+    const setState = (d) => {
+      document.getElementById('ddisc').hidden = d; document.getElementById('dfoot').hidden = d;
+      document.getElementById('dgrid').hidden = !d; document.getElementById('dbar').hidden = !d;
+      for (const el of mock.querySelectorAll('.b-after')) el.style.visibility = d ? '' : 'hidden';
+      for (const el of mock.querySelectorAll('.b-before')) el.style.visibility = d ? 'hidden' : '';
+      ch.classList.remove('open');
+      if (d) home(); else { hand.style.left = '35em'; hand.style.top = '23.5em'; }
+      stateButtons('stateD', d);
+    };
+    mock.querySelectorAll('[data-ch]').forEach(el => el.addEventListener('click', () => open(el.dataset.ch)));
+    document.getElementById('stateD').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) setState(!!+b.dataset.disc); });
+    setState(false);
+  }
+  setupD();
+  setupGrid('mockA', 'stateA', ['13.4em', '11.2em']);
+  setupGrid('mockA2', 'stateA2', ['23em', '19em']);
+
+  // ---- B: the four choices. ----
+  const PANELS = {
+    solo: { desc: 'Race on your own', html: `<h2>Ready to race</h2><button class="pill primary big">Start</button><p>Racing friends instead? Open Play with friends before you start.</p>` },
+    friends: { desc: 'Create a room or enter an invite code', html: `<h2>Play with friends</h2><div style="display:flex;gap:.8em;align-items:center;flex-wrap:wrap;justify-content:center;font-size:1.1em"><button class="pill primary">Create room</button><span style="color:var(--muted)">or</span><input class="field" placeholder="Room code" style="width:11em"><button class="pill">Join room</button></div><p>Create a room and share its link, or enter the code from a friend's invite.</p>` },
+    controls: { desc: 'Keyboard, mouse or a controller', html: `<h2>Controls</h2><div style="display:grid;grid-template-columns:auto 1fr auto 1fr;gap:.6em 1em;align-items:center;text-align:left;font-size:1.05em"><span><i class="key">A</i> <i class="key">D</i></span><span style="color:var(--muted)">Steer</span><span><i class="key">Left click</i></span><span style="color:var(--muted)">Accelerate</span><span><i class="key">Space</i></span><span style="color:var(--muted)">Brake</span><span><i class="key">Right click</i></span><span style="color:var(--muted)">Drift, hop</span><span><i class="key">Shift</i></span><span style="color:var(--muted)">Use item</span><span><i class="key">Enter</i></span><span style="color:var(--muted)">Pause</span></div><p>Start the game, then click a key to change it.</p>` },
+    saves: { desc: 'Export, import and back up', html: `<h2>Saves</h2><div style="display:flex;gap:.6em;flex-wrap:wrap;justify-content:center"><button class="pill">Export save</button><button class="pill">Export backup</button><button class="pill">Import…</button></div><p>Your saves show here once the game has loaded.</p>` },
+  };
+  const bnav = document.getElementById('bnav'), bpanel = document.getElementById('bpanel'), bdesc = document.getElementById('bdesc'), handB = document.getElementById('handB');
+  function showPanel(name) {
+    for (const b of bnav.querySelectorAll('button')) b.setAttribute('aria-current', String(b.dataset.p === name));
+    bpanel.innerHTML = PANELS[name].html; bdesc.textContent = PANELS[name].desc;
+    handB.style.display = name === 'solo' ? '' : 'none';
+  }
+  bnav.addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) showPanel(b.dataset.p); });
+  showPanel('solo');
+  function setStateB(hasDisc) {
+    document.getElementById('bdisc').hidden = hasDisc;
+    document.getElementById('bbody').hidden = !hasDisc;
+    for (const el of document.querySelectorAll('#mockB .b-after')) el.style.visibility = hasDisc ? '' : 'hidden';
+    bdesc.textContent = hasDisc ? PANELS[bnav.querySelector('[aria-current="true"]').dataset.p].desc : 'You can also drop a disc image anywhere on this page.';
+    document.getElementById('bload').innerHTML = hasDisc ? '<span>Loading the game</span><i></i><span>62%</span>' : '<span style="color:var(--ok)">Game loaded</span>';
+    if (hasDisc) { handB.style.left = '45em'; handB.style.top = '24em'; } else { handB.style.left = '35em'; handB.style.top = '23.5em'; }
+    for (const b of document.querySelectorAll('#stateB button')) b.setAttribute('aria-pressed', String(!!+b.dataset.disc === hasDisc));
+  }
+  document.getElementById('stateB').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) setStateB(!!+b.dataset.disc); });
+  setStateB(false);
+</script>
+</body>
+</html>

@@ -1,0 +1,398 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>In-game controls ideas</title>
+<style>
+  html { scroll-behavior: smooth; }
+  body { margin: 0; background: #f4f5f7; color: #2b2f33;
+         font: 15px/1.5 Nunito, "Varela Round", ui-rounded, "Arial Rounded MT Bold", system-ui, sans-serif; }
+  .top { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+         padding: 12px 24px; background: #ffffffee; backdrop-filter: blur(8px); border-bottom: 1px solid #dfe3e7; }
+  .top h1 { font-size: 17px; margin: 0 12px 0 0; }
+  .top nav a { color: #2b8fd1; font-weight: 800; text-decoration: none; margin-right: 14px; }
+  .top .spacer { flex: 1; }
+  .seg { display: inline-flex; border: 1px solid #b4bbc2; border-radius: 999px; overflow: hidden; }
+  .seg button { font: inherit; font-weight: 800; font-size: 13px; padding: 6px 14px; border: 0; background: #fff; color: #4b5157; cursor: pointer; }
+  .seg button[aria-pressed="true"] { background: #2b8fd1; color: #fff; }
+  main { max-width: 1180px; margin: 0 auto; padding: 28px 24px 80px; }
+  section.idea { margin: 0 0 60px; }
+  section.idea > h2 { font-size: 28px; margin: 0 0 4px; }
+  section.idea > h2 small { font-size: 15px; font-weight: 700; color: #6f767d; margin-left: 10px; }
+  .lede { max-width: 860px; margin: 0 0 14px; color: #4b5157; }
+  .notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px 24px; margin: 14px 0 0; padding: 0;
+           list-style: none; max-width: 1000px; }
+  .notes li { padding: 10px 14px; background: #fff; border: 1px solid #dfe3e7; border-radius: 12px; font-size: 14px; }
+  .notes b { color: #2b8fd1; }
+  .try { font-size: 13px; font-weight: 800; color: #2b8fd1; margin: 0 0 8px; }
+
+  /* Tokens: light is the Wii Menu, dark the navy. */
+  .wii { --panel: #ffffff; --line: #c9cfd4; --text: #4b5157; --muted: #868c92; --big: #5d6267; --blue-deep: #1f9ae3; --blue-text: #2b8fd1;
+         --pill: linear-gradient(#ffffff, #e4e8eb); --pill-line: #b4bbc2; --pill-text: #4b5157;
+         --primary: linear-gradient(#9ee0ff, #3cb1ee 50%, #1f9ae3 52%, #39a9ea); --primary-line: #1a7fc0; --primary-text: #fff;
+         --key: linear-gradient(#ffffff, #e9edf0); --key-line: #b4bbc2; --bar: #d8dcdf; --bar-hi: #eceef0; --bar-line: #6ec9f3;
+         --round: radial-gradient(circle at 50% 28%, #ffffff, #e3e7ea 62%, #c9cfd4); --round-line: #bcc3c9; --round-text: #7a8086;
+         --ok: #2e9e5b; --tile-stripes: repeating-linear-gradient(180deg, #e6f3fb 0 .22em, #ffffff .22em .52em); }
+  body.dark .wii { --panel: #143373; --line: #4f86c6; --text: #e8f0f8; --muted: #b9d3f2; --big: #ffffff; --blue-deep: #ffd21f; --blue-text: #ffd21f;
+         --pill: #10295c; --pill-line: #4f86c6; --pill-text: #e8f0f8;
+         --primary: linear-gradient(#ffffff, #eaf3fb 48%, #d9e8f6 52%, #f3f8fc); --primary-line: #b9d3ea; --primary-text: #1b5fa8;
+         --key: #1b3a75; --key-line: #5d8fd0; --bar: #06112e; --bar-hi: #0b1f4f; --bar-line: #4f86c6;
+         --round: radial-gradient(circle at 50% 28%, #2a4f80, #143373 62%, #0d2255); --round-line: #4f86c6; --round-text: #ffd21f;
+         --ok: #9df0bd; --tile-stripes: repeating-linear-gradient(180deg, #16397e 0 .22em, #10295c .22em .52em); }
+
+  /* A mock: the whole browser window, the game picture filling it. 1em = 1/80 of its width. */
+  .mock { container-type: inline-size; width: 100%; aspect-ratio: 16 / 9; position: relative; overflow: hidden; border-radius: 14px;
+          box-shadow: 0 2px 6px rgba(0, 0, 0, .12), 0 0 0 1px rgba(0, 0, 0, .06); background: #0b0c10; color: var(--text); }
+  .mock * { box-sizing: border-box; }
+  .inner { position: absolute; inset: 0; font-size: 1.25cqw; }
+  /* A stand-in for the game picture: 4:3 inside the 16:9 window, drawn, nothing from the game. */
+  .picture { position: absolute; top: 0; bottom: 0; left: 12.5%; right: 12.5%; overflow: hidden;
+             background: linear-gradient(#3f78c9 0%, #9cc7f2 52%, #5f9a48 52.2%, #3c6e2c 100%); }
+  .picture::before { content: ''; position: absolute; left: 50%; bottom: 0; width: 70%; height: 48%; transform: translateX(-50%);
+                     background: #5a5f66; clip-path: polygon(42% 0, 58% 0, 100% 100%, 0 100%); }
+  .picture::after { content: ''; position: absolute; left: 50%; bottom: 0; width: 1.2%; height: 48%; transform: translateX(-50%);
+                    background: repeating-linear-gradient(180deg, #fff 0 12%, transparent 12% 24%); opacity: .8; }
+  .picture .hud { position: absolute; left: 1.2em; top: 1em; color: #fff; font-weight: 900; font-size: 1.4em; text-shadow: 0 1px 3px #000; z-index: 1; }
+  .picture .hud small { display: block; font-size: .6em; font-weight: 800; opacity: .85; }
+  .mock.paused .picture { filter: saturate(.6) brightness(.8); }
+  .icon { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .pill { font: inherit; font-weight: 800; color: var(--pill-text); background: var(--pill); border: .12em solid var(--pill-line);
+          border-radius: 999px; padding: .4em 1.2em; cursor: pointer; white-space: nowrap; }
+  .pill.primary { background: var(--primary); color: var(--primary-text); border-color: var(--primary-line); }
+  .key { display: inline-block; font-size: .85em; font-weight: 800; font-style: normal; line-height: 1; color: var(--text); background: var(--key);
+         border: 1px solid var(--key-line); border-bottom-width: .25em; border-radius: .5em; padding: .35em .55em; white-space: nowrap; }
+  /* The card every option opens: a white tile with the same content the sidebar had. */
+  .card { background: var(--panel); border: .18em solid var(--line); border-radius: 1.6em; padding: 1.6em 2em; color: var(--text);
+          box-shadow: 0 .8em 2em rgba(0, 0, 0, .35); }
+  .card h3 { margin: 0 0 .5em; font-size: 2em; font-weight: 600; color: var(--big); }
+  .card h4 { margin: 1em 0 .4em; font-size: .85em; letter-spacing: .1em; text-transform: uppercase; color: var(--blue-text); }
+  .card p { margin: .4em 0; color: var(--muted); font-size: 1.05em; }
+  .keys { display: grid; grid-template-columns: auto 1fr auto 1fr; gap: .55em 1em; align-items: center; font-size: 1.05em; }
+  .keys span { color: var(--muted); }
+  .row { display: flex; gap: .7em; align-items: center; flex-wrap: wrap; }
+  .roster { margin: .2em 0 0; padding: 0; list-style: none; font-size: 1.05em; }
+  .roster li { display: flex; gap: .5em; align-items: center; padding: .2em 0; }
+  .roster li::before { content: ''; width: .55em; height: .55em; border-radius: 50%; background: #3fbf6f; }
+  .slider { position: relative; height: .6em; border-radius: 999px; background: rgba(255, 255, 255, .25); min-width: 10em; }
+  .slider::before { content: ''; position: absolute; inset: 0 28% 0 0; border-radius: 999px; background: #6ec9f3; }
+  .slider::after { content: ''; position: absolute; left: 72%; top: 50%; width: 1.3em; height: 1.3em; border-radius: 50%; transform: translate(-50%, -50%);
+                   background: #fff; border: .12em solid #bcc3c9; }
+  body:not(.room) .room-only, body.room .solo-only { display: none !important; }
+
+  /* ---------- 1: the HOME Menu ---------- */
+  .home-btn { position: absolute; right: 1.2em; top: 1.2em; z-index: 3; display: flex; align-items: center; gap: .5em; padding: .45em .9em .45em .6em;
+              border-radius: 999px; border: .12em solid rgba(255, 255, 255, .7); background: rgba(20, 24, 30, .45); color: #fff; font: inherit;
+              font-weight: 800; cursor: pointer; opacity: .55; transition: opacity .2s; backdrop-filter: blur(4px); }
+  .home-btn:hover { opacity: 1; }
+  .home-btn svg { width: 1.5em; height: 1.5em; }
+  .home-btn .key { font-size: .75em; }
+  .home { position: absolute; inset: 0; z-index: 4; display: none; flex-direction: column; color: #fff; }
+  .home.open { display: flex; }
+  .home .bar-t, .home .bar-b { flex: none; display: flex; align-items: center; gap: 1.4em; padding: 0 2.4em;
+                               background: linear-gradient(#1a1d22, #0c0e11); }
+  .home .bar-t { height: 15%; border-bottom: .22em solid #6ec9f3; justify-content: space-between; }
+  .home .bar-b { height: 18%; border-top: .22em solid #6ec9f3; }
+  .home .bar-t h3 { margin: 0; font-size: 2.3em; font-weight: 500; letter-spacing: .01em; }
+  .home .state { font-weight: 800; color: #9cd9ff; font-size: 1.1em; }
+  .home .mid { flex: 1; display: flex; align-items: center; justify-content: center; gap: 1.6em; background: rgba(0, 0, 0, .55); min-height: 0; padding: 1em; }
+  .home .big { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .4em; width: 13em; height: 8.5em;
+               border-radius: 1.5em; border: .2em solid #c9cfd4; background: linear-gradient(#ffffff, #e9edf0); color: #4b5157; font: inherit;
+               font-size: 1em; font-weight: 800; cursor: pointer; transition: transform .15s, box-shadow .15s; }
+  .home .big:hover { transform: scale(1.04); box-shadow: 0 0 0 .25em #c9ebff, 0 0 1.6em #8fd4ff; }
+  .home .big svg { width: 3em; height: 3em; color: #1f9ae3; stroke-width: 1.8; }
+  .home .big b { font-size: 1.3em; }
+  .home .mid .card { width: min(46em, 100%); max-height: 100%; overflow: auto; }
+  .home .bar-b .label { font-weight: 800; }
+  .home .bar-b .spacer { flex: 1; }
+  .dark-pill { font: inherit; font-weight: 800; color: #fff; background: rgba(255, 255, 255, .12); border: .12em solid rgba(255, 255, 255, .5);
+               border-radius: 999px; padding: .4em 1.1em; cursor: pointer; }
+
+  /* ---------- 2: the player bar ---------- */
+  .pbar { position: absolute; left: 50%; top: 1.1em; transform: translateX(-50%); z-index: 3; display: flex; align-items: center; gap: .3em;
+          padding: .35em .5em; border-radius: 999px; background: rgba(20, 24, 30, .55); border: .1em solid rgba(255, 255, 255, .35);
+          backdrop-filter: blur(6px); color: #fff; opacity: .28; transition: opacity .25s; }
+  .mock:hover .pbar, .pbar.keep { opacity: 1; }
+  .pbar button { display: flex; align-items: center; gap: .45em; font: inherit; font-weight: 800; color: #fff; background: none; border: 0;
+                 border-radius: 999px; padding: .45em .8em; cursor: pointer; }
+  .pbar button:hover, .pbar button[aria-expanded="true"] { background: rgba(255, 255, 255, .18); }
+  .pbar svg { width: 1.5em; height: 1.5em; }
+  .pbar .sep { width: 1px; height: 1.6em; background: rgba(255, 255, 255, .3); margin: 0 .2em; }
+  .pbar .slider { min-width: 6em; }
+  .pop { position: absolute; left: 50%; top: 5.2em; transform: translateX(-50%); z-index: 3; width: 40em; display: none; }
+  .pop.open { display: block; }
+  .pop .card { padding: 1.2em 1.6em; }
+  .pop .card h3 { font-size: 1.5em; }
+
+  /* ---------- 1 + 2: a faint corner button that opens into the pill ---------- */
+  .dock { position: absolute; right: 1.2em; top: 1.2em; z-index: 3; display: flex; align-items: center; border-radius: 999px;
+          background: rgba(20, 24, 30, .5); border: .1em solid rgba(255, 255, 255, .4); backdrop-filter: blur(6px); color: #fff;
+          padding: .3em; opacity: 0; transition: opacity .35s ease, background .25s ease; }
+  .mock.active .dock { opacity: .5; }
+  .dock:hover, .dock.open, .mock.active .dock.open { opacity: 1; }
+  .dock.open { background: rgba(20, 24, 30, .62); }
+  .dock-items { display: flex; align-items: center; gap: .3em; max-width: 0; opacity: 0; overflow: hidden; white-space: nowrap;
+                transform: translateX(1.2em); transition: max-width .42s cubic-bezier(.2, .9, .25, 1), opacity .2s ease, transform .42s cubic-bezier(.2, .9, .25, 1); }
+  .dock.open .dock-items { max-width: 52em; opacity: 1; transform: none; padding: 0 .3em 0 .2em; transition-delay: 0s, .12s, 0s; }
+  .dock button { display: flex; align-items: center; gap: .45em; font: inherit; font-weight: 800; color: #fff; background: none; border: 0;
+                 border-radius: 999px; padding: .45em .8em; cursor: pointer; flex: none; }
+  .dock button:hover, .dock button[aria-expanded="true"] { background: rgba(255, 255, 255, .18); }
+  .dock svg { width: 1.5em; height: 1.5em; flex: none; }
+  .dock .sep { width: 1px; height: 1.6em; background: rgba(255, 255, 255, .3); margin: 0 .2em; flex: none; }
+  .dock .slider { min-width: 6em; flex: none; }
+  .dock-toggle { width: 2.6em; height: 2.6em; justify-content: center; padding: 0 !important; position: relative; }
+  .dock-toggle svg { position: absolute; transition: transform .35s ease, opacity .2s ease; }
+  .dock-toggle .x { opacity: 0; transform: rotate(-90deg) scale(.6); }
+  .dock.open .dock-toggle .m { opacity: 0; transform: rotate(90deg) scale(.6); }
+  .dock.open .dock-toggle .x { opacity: 1; transform: none; }
+  .dpop { position: absolute; right: 1.2em; top: 5.4em; z-index: 3; width: 40em; opacity: 0; transform: translateY(-.6em); pointer-events: none;
+          transition: opacity .2s ease, transform .25s ease; }
+  .dpop.open { opacity: 1; transform: none; pointer-events: auto; }
+  .dpop .card { padding: 1.2em 1.6em; }
+  .dpop .card h3 { font-size: 1.5em; }
+  @media (prefers-reduced-motion: reduce) { .dock, .dock-items, .dock-toggle svg, .dpop { transition: none; } }
+
+  /* ---------- 3: the shelf ---------- */
+  .tab { position: absolute; left: 50%; bottom: 0; transform: translateX(-50%); z-index: 3; display: flex; align-items: center; gap: .4em;
+         padding: .3em 1.4em .25em; border-radius: 1em 1em 0 0; border: .12em solid var(--bar-line); border-bottom: 0; background: var(--bar);
+         color: var(--round-text); font: inherit; font-weight: 800; font-size: .95em; cursor: pointer; opacity: .6; transition: opacity .2s; }
+  .tab:hover { opacity: 1; }
+  .tab svg { width: 1.2em; height: 1.2em; }
+  .shelf { position: absolute; left: 0; right: 0; bottom: 0; height: 30%; z-index: 4; transform: translateY(101%); transition: transform .28s ease; }
+  .shelf.open { transform: none; }
+  .shelf svg.wave { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .shelf .wave .fill { fill: var(--bar); } .shelf .wave .line { fill: none; stroke: var(--bar-line); stroke-width: 4; }
+  .shelf .round { position: absolute; bottom: 9%; width: 8em; height: 8em; border-radius: 50%; display: flex; flex-direction: column; align-items: center;
+                  justify-content: center; gap: .05em; background: var(--round); border: .22em solid var(--round-line); color: var(--round-text);
+                  font: inherit; font-weight: 800; cursor: pointer; transition: transform .18s; }
+  .shelf .round:hover { transform: scale(1.06); }
+  .shelf .round svg { width: 3.1em; height: 3.1em; color: var(--blue-text); stroke-width: 1.8; }
+  .shelf .r1 { left: 4em; } .shelf .r2 { left: 14em; } .shelf .rc { left: 50%; margin-left: -4em; } .shelf .r3 { right: 14em; } .shelf .r4 { right: 4em; }
+  .shelf .vol { position: absolute; left: 50%; top: 10%; transform: translateX(-50%); display: flex; align-items: center; gap: .8em; color: #fff;
+                font-weight: 800; text-shadow: 0 1px 2px #000; }
+  .shelf .vol svg { width: 1.6em; height: 1.6em; }
+  .shelf .close { position: absolute; right: 1em; top: 12%; }
+  .scrim { position: absolute; inset: 0; z-index: 5; display: none; align-items: center; justify-content: center; background: rgba(0, 0, 0, .5); padding: 2em; }
+  .scrim.open { display: flex; }
+  .scrim .card { width: min(46em, 100%); }
+</style>
+</head>
+<body>
+<header class="top">
+  <h1>In-game controls ideas</h1>
+  <nav><a href="#o4">1 + 2 · Combined</a><a href="#o1">1 · HOME Menu</a><a href="#o2">2 · Player bar</a><a href="#o3">3 · Shelf</a></nav>
+  <span class="spacer"></span>
+  <span class="seg" id="mode"><button aria-pressed="true" data-v="solo">Solo</button><button aria-pressed="false" data-v="room">In a room</button></span>
+  <span class="seg" id="skin"><button aria-pressed="true" data-v="light">Light</button><button aria-pressed="false" data-v="dark">Dark</button></span>
+</header>
+<main>
+<p class="lede">Three ways to lose the sidebar. In all of them the game picture takes the whole window and nothing is on screen until you ask for it. The Solo / In a room switch at the top shows what changes online: the room shows up, and the game cannot pause.</p>
+<p class="lede"><b>On pausing.</b> The page cannot pause the game today; it can only set volume, mute, rebind a key and name the player. For a solo race, pausing when a menu opens is a small addition to the runtime (hold the frame loop and the audio while the menu is up). In a room it must keep running: an online race has no pause, and freezing one browser would drop that player. So the modal options below say "Game paused" in solo and "The race keeps going" in a room.</p>
+
+<!-- ============ 1 + 2 ============ -->
+<section class="idea" id="o4">
+  <h2>1 + 2 · Combined <small>a faint corner button that opens into the slim pill</small></h2>
+  <p class="lede">While you race there is one faint round button in the top right. It fades out completely after about three seconds without mouse movement and comes back when the mouse moves. Click it and it stretches leftward into the pill: Controls, Saves, the volume, Help and full screen slide out of it, and the button itself turns into the close mark. Controls, Saves and Help drop a small card under the pill; the game keeps running behind it. Click the close mark, or press Esc, and the pill folds back into the button.</p>
+  <p class="try">Try it: move the mouse over the picture, click the round button, then Controls. Hold the mouse still to watch it fade.</p>
+  <div class="mock wii" id="m4"><div class="inner">
+    <div class="picture"><div class="hud">1st<small>Lap 2 / 3</small></div></div>
+    <div class="dock" id="dock">
+      <div class="dock-items" id="dock-items">
+        <button data-pop="controls" aria-expanded="false"><svg class="icon" viewBox="0 0 24 24"><rect x="8.5" y="2" width="7" height="20" rx="2.2"/><path d="M12 6.2v2.6M10.7 7.5h2.6"/><circle cx="12" cy="12.2" r="1.3"/><path d="M12 16h.01M12 19h.01"/></svg>Controls</button>
+        <button data-pop="saves" aria-expanded="false"><svg class="icon" viewBox="0 0 24 24"><path d="M12 4v10m0 0-4-4m4 4 4-4M5 19h14"/></svg>Saves</button>
+        <button class="room-only" data-pop="room" aria-expanded="false"><svg class="icon" viewBox="0 0 24 24"><path d="M16 19v-1.5a3.5 3.5 0 0 0-3.5-3.5h-5A3.5 3.5 0 0 0 4 17.5V19"/><circle cx="10" cy="8" r="3.5"/><path d="M20 19v-1.5a3.5 3.5 0 0 0-2.5-3.35M15 4.7a3.5 3.5 0 0 1 0 6.6"/></svg>3 / 12</button>
+        <span class="sep"></span>
+        <button title="Mute"><svg class="icon" viewBox="0 0 24 24"><path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5zM15.5 9a4 4 0 0 1 0 6"/></svg></button>
+        <div class="slider"></div>
+        <span class="sep"></span>
+        <button data-pop="help" aria-expanded="false"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.6 2.2c-.8.4-1.1.9-1.1 1.8M12 17h.01"/></svg>Help</button>
+        <button title="Full screen"><svg class="icon" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+        <span class="sep"></span>
+      </div>
+      <button class="dock-toggle" id="dock-toggle" aria-expanded="false" title="Menu (Esc)">
+        <svg class="icon m" viewBox="0 0 24 24"><path d="M5 7h14M5 12h14M5 17h14"/></svg>
+        <svg class="icon x" viewBox="0 0 24 24"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg>
+      </button>
+    </div>
+    <div class="dpop" id="dpop"><div class="card" id="dpop-card"></div></div>
+  </div></div>
+  <ul class="notes">
+    <li><b>On screen while playing.</b> Nothing when the mouse is still. One faint button when it moves. The open pill stays until you close it, so it never vanishes mid-click.</li>
+    <li><b>Pause.</b> None: the cards are small and the race stays visible, so solo and a room behave the same and the runtime needs no change. A solo pause can still be added later for the cards.</li>
+    <li><b>Keyboard and pad.</b> Esc opens and closes the pill, since those players never move the mouse. In a room the pill gains the room count, which opens the roster and invite.</li>
+    <li><b>Remapping keys.</b> The Controls card lists the keys and takes clicks to rebind, as the sidebar does; the full settings stay on F10.</li>
+  </ul>
+</section>
+
+<!-- ============ 1 ============ -->
+<section class="idea" id="o1">
+  <h2>1 · The HOME Menu <small>one button, then a full overlay; pauses in solo</small></h2>
+  <p class="lede">What the Wii itself does when you press HOME mid-game: the picture dims between two black bars. A small faded button sits in the corner, and Esc does the same. The bars hold the title, the state and the volume; the middle holds three big buttons that open Controls, Saves and Help as a card. The most Wii of the three, and the only one where pausing is natural.</p>
+  <p class="try">Try it: click the HOME button in the corner, then a big button.</p>
+  <div class="mock wii" id="m1"><div class="inner">
+    <div class="picture"><div class="hud">1st<small>Lap 2 / 3</small></div></div>
+    <button class="home-btn" id="home-open"><svg class="icon" viewBox="0 0 24 24"><path d="M4 11.5 12 4l8 7.5M6.5 10v9h11v-9"/></svg>Menu <i class="key">Esc</i></button>
+    <div class="home" id="home">
+      <div class="bar-t">
+        <h3>HOME Menu</h3>
+        <span class="state solo-only">Game paused</span>
+        <span class="state room-only">Online: the race keeps going · Room 3 / 12</span>
+        <button class="dark-pill" id="home-close">Back to the game</button>
+      </div>
+      <div class="mid" id="home-mid"></div>
+      <div class="bar-b">
+        <svg class="icon" viewBox="0 0 24 24" style="width:1.8em;height:1.8em"><path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5zM15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/></svg>
+        <div class="slider"></div><span class="label">72%</span>
+        <button class="dark-pill">Mute</button>
+        <span class="spacer"></span>
+        <button class="dark-pill room-only">Copy invite</button>
+        <button class="dark-pill">Dark theme</button>
+        <button class="dark-pill">Full screen</button>
+      </div>
+    </div>
+  </div></div>
+  <ul class="notes">
+    <li><b>On screen while playing.</b> One faded button in the corner. It can fade out entirely after a few seconds and come back on mouse movement.</li>
+    <li><b>Pause.</b> Solo: the game holds while the menu is up. In a room: no pause, the bar says so, and the menu is see-through enough to keep an eye on the race.</li>
+    <li><b>Cost.</b> New overlay markup; the bindings, saves and help blocks move into it instead of the sidebar. The solo pause needs one new runtime export.</li>
+  </ul>
+</section>
+
+<!-- ============ 2 ============ -->
+<section class="idea" id="o2">
+  <h2>2 · The player bar <small>a video-player strip that fades; nothing modal, no pause</small></h2>
+  <p class="lede">A slim pill at the top of the picture, like a video player's controls: it shows when the mouse moves and fades after a few seconds. Volume is right there; Controls, Room and Help open a small card under the bar and the game keeps running behind it. The least interruption, and the same in solo and online.</p>
+  <p class="try">Try it: move the mouse over the picture, then click Controls or Help.</p>
+  <div class="mock wii" id="m2"><div class="inner">
+    <div class="picture"><div class="hud">1st<small>Lap 2 / 3</small></div></div>
+    <div class="pbar" id="pbar">
+      <button data-pop="controls" aria-expanded="false"><svg class="icon" viewBox="0 0 24 24"><rect x="8.5" y="2" width="7" height="20" rx="2.2"/><path d="M12 6.2v2.6M10.7 7.5h2.6"/><circle cx="12" cy="12.2" r="1.3"/><path d="M12 16h.01M12 19h.01"/></svg>Controls</button>
+      <button data-pop="saves" aria-expanded="false"><svg class="icon" viewBox="0 0 24 24"><path d="M12 4v10m0 0-4-4m4 4 4-4M5 19h14"/></svg>Saves</button>
+      <button class="room-only" data-pop="room" aria-expanded="false"><svg class="icon" viewBox="0 0 24 24"><path d="M16 19v-1.5a3.5 3.5 0 0 0-3.5-3.5h-5A3.5 3.5 0 0 0 4 17.5V19"/><circle cx="10" cy="8" r="3.5"/><path d="M20 19v-1.5a3.5 3.5 0 0 0-2.5-3.35M15 4.7a3.5 3.5 0 0 1 0 6.6"/></svg>3 / 12</button>
+      <span class="sep"></span>
+      <button title="Mute"><svg class="icon" viewBox="0 0 24 24"><path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5zM15.5 9a4 4 0 0 1 0 6"/></svg></button>
+      <div class="slider"></div>
+      <span class="sep"></span>
+      <button data-pop="help" aria-expanded="false"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.6 2.2c-.8.4-1.1.9-1.1 1.8M12 17h.01"/></svg>Help</button>
+      <button title="Full screen"><svg class="icon" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+    </div>
+    <div class="pop" id="pop"><div class="card" id="pop-card"></div></div>
+  </div></div>
+  <ul class="notes">
+    <li><b>On screen while playing.</b> Nothing after a few seconds without the mouse. Keyboard and pad players never see it unless they reach for the mouse.</li>
+    <li><b>Pause.</b> None, by design: the cards are small and the race stays visible. Nothing differs between solo and a room.</li>
+    <li><b>Cost.</b> The smallest runtime change (none). The bindings list has to fit a compact card, so remapping keeps its own bigger view or stays in F10.</li>
+  </ul>
+</section>
+
+<!-- ============ 3 ============ -->
+<section class="idea" id="o3">
+  <h2>3 · The shelf <small>the menu's curved bar, tucked under the picture</small></h2>
+  <p class="lede">The same curved bar as the menu before the game, hidden below the bottom edge with a small tab showing. Click the tab (or press Esc) and it slides up with the same round buttons, Saves, Controls and Help, plus the volume in its bay; a round button opens its card over the dimmed game. One vocabulary before and during the game.</p>
+  <p class="try">Try it: click the Menu tab at the bottom, then a round button.</p>
+  <div class="mock wii" id="m3"><div class="inner">
+    <div class="picture"><div class="hud">1st<small>Lap 2 / 3</small></div></div>
+    <button class="tab" id="tab"><svg class="icon" viewBox="0 0 24 24"><path d="M6 14l6-6 6 6"/></svg>Menu</button>
+    <div class="shelf" id="shelf">
+      <svg class="wave" viewBox="0 0 1200 200" preserveAspectRatio="none" aria-hidden="true"><path class="fill" d="M0 62 C 230 62 330 132 600 132 C 870 132 970 62 1200 62 V 200 H 0 Z"/><path class="line" d="M0 62 C 230 62 330 132 600 132 C 870 132 970 62 1200 62" vector-effect="non-scaling-stroke"/></svg>
+      <div class="vol"><svg class="icon" viewBox="0 0 24 24"><path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5zM15.5 9a4 4 0 0 1 0 6"/></svg><div class="slider"></div>72%</div>
+      <button class="round r1" data-card="saves"><svg class="icon" viewBox="0 0 24 24"><path d="M12 4v10m0 0-4-4m4 4 4-4M5 19h14"/></svg>Saves</button>
+      <button class="round r2 room-only" data-card="room"><svg class="icon" viewBox="0 0 24 24"><path d="M16 19v-1.5a3.5 3.5 0 0 0-3.5-3.5h-5A3.5 3.5 0 0 0 4 17.5V19"/><circle cx="10" cy="8" r="3.5"/><path d="M20 19v-1.5a3.5 3.5 0 0 0-2.5-3.35M15 4.7a3.5 3.5 0 0 1 0 6.6"/></svg>Room</button>
+      <button class="round rc" data-card="controls"><svg class="icon" viewBox="0 0 24 24"><rect x="8.5" y="2" width="7" height="20" rx="2.2"/><path d="M12 6.2v2.6M10.7 7.5h2.6"/><circle cx="12" cy="12.2" r="1.3"/><path d="M12 16h.01M12 19h.01"/></svg>Controls</button>
+      <button class="round r4" data-card="help"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.6 2.2c-.8.4-1.1.9-1.1 1.8M12 17h.01"/></svg>Help</button>
+      <button class="pill close" id="shelf-close">Close</button>
+    </div>
+    <div class="scrim" id="scrim"><div class="card" id="scrim-card"></div></div>
+  </div></div>
+  <ul class="notes">
+    <li><b>On screen while playing.</b> A small tab at the bottom edge, faded. The raised shelf covers the bottom third of the picture; the cards cover the middle.</li>
+    <li><b>Pause.</b> Optional: the shelf alone can leave the race running (it is only a strip), and a card can pause in solo as the HOME Menu does.</li>
+    <li><b>Cost.</b> Reuses the menu's bar, round buttons and cards almost as they are, so the least new styling.</li>
+  </ul>
+</section>
+
+<section class="idea">
+  <h2>How they compare</h2>
+  <ul class="notes">
+    <li><b>Most minimal while racing:</b> 2, then 1, then 3.</li>
+    <li><b>Most Wii:</b> 1. It is the console's own answer to this exact problem.</li>
+    <li><b>Most consistent with the new menu:</b> 3, since it is the same bar.</li>
+    <li><b>Best for remapping keys:</b> 1 and 3, which have room for the full bindings list. 2 keeps cards small.</li>
+    <li><b>A mix that works:</b> 1 for the menu, plus only the volume and mute from 2 as a fading corner control.</li>
+  </ul>
+</section>
+</main>
+<script>
+  // Shared card content: what the sidebar holds today.
+  const CARDS = {
+    controls: `<h3>Controls</h3><div class="keys"><span><i class="key">A</i> <i class="key">D</i></span><span>Steer</span><span><i class="key">Left click</i></span><span>Accelerate</span><span><i class="key">Space</i></span><span>Brake / reverse</span><span><i class="key">Right click</i></span><span>Drift, hop</span><span><i class="key">↑</i></span><span>Trick</span><span><i class="key">Shift</i></span><span>Use item</span><span><i class="key">W</i> <i class="key">S</i></span><span>Aim item</span><span><i class="key">Enter</i></span><span>Pause</span></div><p>Click a key to change it. A game controller works too.</p>`,
+    saves: `<h3>Saves</h3><p>Saved in this browser.</p><div class="row"><button class="pill">Export save</button><button class="pill">Export backup</button><button class="pill">Import…</button></div>`,
+    help: `<h3>Help</h3><p>Low FPS, stutter, a crash or a disconnect? Press Save log straight after it happens, then DM the file to <b>hiemal</b> on Discord with a few words about what you saw.</p><div class="row"><button class="pill primary">Save log</button><label><input type="checkbox"> Detailed logging</label></div>`,
+    room: `<h3>Your room</h3><div class="row"><button class="pill primary">Copy invite</button><button class="pill">Leave room</button></div><h4>In this room · 3 / 12</h4><ul class="roster"><li>mukul (you) · in game</li><li>hiemal · in game</li><li>Racer · in lobby</li></ul>`,
+  };
+  const seg = (id, apply) => document.getElementById(id).addEventListener('click', (e) => {
+    const b = e.target.closest('button'); if (!b) return;
+    for (const x of e.currentTarget.querySelectorAll('button')) x.setAttribute('aria-pressed', String(x === b));
+    apply(b.dataset.v);
+  });
+  seg('mode', (v) => document.body.classList.toggle('room', v === 'room'));
+  seg('skin', (v) => document.body.classList.toggle('dark', v === 'dark'));
+
+  // 1: HOME Menu.
+  const m1 = document.getElementById('m1'), home = document.getElementById('home'), mid = document.getElementById('home-mid');
+  const ICON = {
+    controls: '<svg class="icon" viewBox="0 0 24 24"><rect x="8.5" y="2" width="7" height="20" rx="2.2"/><path d="M12 6.2v2.6M10.7 7.5h2.6"/><circle cx="12" cy="12.2" r="1.3"/><path d="M12 16h.01M12 19h.01"/></svg>',
+    saves: '<svg class="icon" viewBox="0 0 24 24"><path d="M12 4v10m0 0-4-4m4 4 4-4M5 19h14"/></svg>',
+    help: '<svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.6 2.2c-.8.4-1.1.9-1.1 1.8M12 17h.01"/></svg>',
+    room: '<svg class="icon" viewBox="0 0 24 24"><path d="M16 19v-1.5a3.5 3.5 0 0 0-3.5-3.5h-5A3.5 3.5 0 0 0 4 17.5V19"/><circle cx="10" cy="8" r="3.5"/><path d="M20 19v-1.5a3.5 3.5 0 0 0-2.5-3.35M15 4.7a3.5 3.5 0 0 1 0 6.6"/></svg>',
+  };
+  const homeButtons = () => { mid.innerHTML = ['controls', 'saves', 'help', 'room'].map((k) =>
+    `<button class="big${k === 'room' ? ' room-only' : ''}" data-k="${k}">${ICON[k]}<b>${k === 'room' ? 'Room' : k[0].toUpperCase() + k.slice(1)}</b></button>`).join(''); };
+  const setHome = (open) => { home.classList.toggle('open', open); m1.classList.toggle('paused', open && !document.body.classList.contains('room')); if (open) homeButtons(); };
+  document.getElementById('home-open').addEventListener('click', () => setHome(true));
+  document.getElementById('home-close').addEventListener('click', () => setHome(false));
+  mid.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-k]'); if (b) { mid.innerHTML = `<div class="card">${CARDS[b.dataset.k]}<div class="row" style="margin-top:1em"><button class="pill" data-back>Back</button></div></div>`; return; }
+    if (e.target.closest('[data-back]')) homeButtons();
+  });
+
+  // 2: player bar popovers.
+  const pop = document.getElementById('pop'), popCard = document.getElementById('pop-card'), pbar = document.getElementById('pbar');
+  pbar.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-pop]'); if (!b) return;
+    const was = b.getAttribute('aria-expanded') === 'true';
+    for (const x of pbar.querySelectorAll('[data-pop]')) x.setAttribute('aria-expanded', 'false');
+    pop.classList.toggle('open', !was); pbar.classList.toggle('keep', !was);
+    if (!was) { b.setAttribute('aria-expanded', 'true'); popCard.innerHTML = CARDS[b.dataset.pop]; }
+  });
+
+  // 1 + 2: the corner button fades when the mouse is still and opens into the pill.
+  const m4 = document.getElementById('m4'), dock = document.getElementById('dock'), dockToggle = document.getElementById('dock-toggle');
+  const dpop = document.getElementById('dpop'), dpopCard = document.getElementById('dpop-card');
+  let idleTimer = 0;
+  const wake = () => { m4.classList.add('active'); clearTimeout(idleTimer); idleTimer = setTimeout(() => m4.classList.remove('active'), 3000); };
+  m4.addEventListener('mousemove', wake);
+  m4.addEventListener('mouseleave', () => { clearTimeout(idleTimer); idleTimer = setTimeout(() => m4.classList.remove('active'), 600); });
+  wake();
+  const closeCard = () => { dpop.classList.remove('open'); for (const x of dock.querySelectorAll('[data-pop]')) x.setAttribute('aria-expanded', 'false'); };
+  const setDock = (open) => { dock.classList.toggle('open', open); dockToggle.setAttribute('aria-expanded', String(open)); if (!open) closeCard(); wake(); };
+  dockToggle.addEventListener('click', () => setDock(!dock.classList.contains('open')));
+  document.getElementById('dock-items').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-pop]'); if (!b) return;
+    const was = b.getAttribute('aria-expanded') === 'true';
+    closeCard();
+    if (!was) { b.setAttribute('aria-expanded', 'true'); dpopCard.innerHTML = CARDS[b.dataset.pop]; dpop.classList.add('open'); }
+  });
+  addEventListener('keydown', (e) => { if (e.key === 'Escape') setDock(!dock.classList.contains('open')); });
+
+  // 3: the shelf.
+  const shelf = document.getElementById('shelf'), scrim = document.getElementById('scrim'), tab = document.getElementById('tab');
+  tab.addEventListener('click', () => shelf.classList.add('open'));
+  document.getElementById('shelf-close').addEventListener('click', () => shelf.classList.remove('open'));
+  shelf.addEventListener('click', (e) => { const b = e.target.closest('[data-card]'); if (!b) return;
+    document.getElementById('scrim-card').innerHTML = CARDS[b.dataset.card] + '<div class="row" style="margin-top:1em"><button class="pill" data-close>Close</button></div>';
+    scrim.classList.add('open'); });
+  scrim.addEventListener('click', (e) => { if (e.target === scrim || e.target.closest('[data-close]')) scrim.classList.remove('open'); });
+</script>
+</body>
+</html>
