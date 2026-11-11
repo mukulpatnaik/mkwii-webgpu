@@ -5,6 +5,9 @@ Mario Kart Wii running in Chrome, from the player's own disc, on
 code is translated to C++ ahead of time and compiled with Emscripten to WebAssembly, rendered
 through aurora on WebGPU, with guest threads as JSPI coroutines. No emulator, no JIT.
 
+**Play it at [mkwii.online](https://mkwii.online)** (Chrome or Edge 137+ on a desktop): pick your
+own disc image in the page, and create a room to race friends online.
+
 The browser port itself is Minithena's `web` branch of WiiCompiled. This project adds NTSC-U/J/K
 support (DarthMDev's region work, since superseded upstream by patchzyy/Wiicompiled#326), and the
 pieces a private release needs: players pick their own disc image in the page (read locally,

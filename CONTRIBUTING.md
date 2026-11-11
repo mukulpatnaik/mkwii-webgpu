@@ -21,8 +21,8 @@ the two retail hashes the translator already pins. `.gitignore` covers the usual
 `git status` and `git diff --stat` before every commit, and `git log --stat` before a pull request.
 A pull request that contains any of it is closed and the history is rewritten.
 
-The same goes for builds: never attach one to an issue or a pull request, never link to a hosted
-build on a public address.
+The same goes for builds: never attach one to an issue or a pull request, and never host or link
+to a build of your own. The one public build is the owner's, at [mkwii.online](https://mkwii.online).
 
 ## Before a pull request
 
