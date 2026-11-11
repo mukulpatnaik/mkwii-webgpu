@@ -8,6 +8,10 @@ Thanks for looking. Two repositories take changes:
   to this project belong upstream in [patchzyy/Wiicompiled](https://github.com/patchzyy/Wiicompiled);
   send them there first and reference the upstream PR here.
 
+The fork is a submodule of this repository at `work/Wiicompiled` (clone with `--recursive`, or
+`git submodule update --init`). A change that touches both is two pull requests: the fork's
+first, then one here that moves the submodule to the merged commit (`git add work/Wiicompiled`).
+
 ## The one rule that cannot be broken
 
 **Nothing derived from the game goes into git.** Not a disc image, not an extracted file, not a

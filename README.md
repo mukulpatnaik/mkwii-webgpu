@@ -37,13 +37,20 @@ harness, and private hosting. State and evidence: [docs/release-checklist.md](do
 | `tools/hosting/` | Private hosting: Cloudflare Worker + R2 behind Access, or a single machine with Caddy/nginx or Tailscale |
 | `tools/relay/` | The room relay for online play: Minithena's Cloudflare Worker, vendored unchanged. **AGPL-3.0**, its own `LICENSE`; local run, tests, deploy command |
 | `spikes/` | `disc-wasm` (nod for wasm32, now the product's disc reader in the fork) and `wasm-lean-runtime` |
-| `work/` (gitignored) | `Wiicompiled`: the fork, branch `athena-web-ntsc`; builds, staged sites, release directories |
+| `work/Wiicompiled` (submodule) | The engine: the fork of WiiCompiled, branch `athena-web-ntsc`, pinned to one commit by this repository |
+| `work/` otherwise (gitignored) | Builds, staged sites, release directories, track worktrees |
 | `upstream/` (gitignored) | Read-only clones of the repositories studied, pinned by `scripts/clone-upstream.sh` |
 | `game/` (gitignored) | Your disc image and extraction scratch |
 
-The fork is its own git repository:
+The fork is its own git repository,
 [mukulpatnaik/mkwii-webgpu-wiicompiled](https://github.com/mukulpatnaik/mkwii-webgpu-wiicompiled)
-(branch `athena-web-ntsc`; `minithena-web` keeps Minithena's web branch as it was). Minithena's
+(branch `athena-web-ntsc`; `minithena-web` keeps Minithena's web branch as it was), and sits in
+this one as a submodule at `work/Wiicompiled`: every commit here records the fork commit it goes
+with. A change to the fork is two commits: commit and push in `work/Wiicompiled`, then
+`git add work/Wiicompiled` and commit here. To follow someone else's change,
+`git pull && git submodule update` (it fast-forwards the fork's branch; `scripts/doctor.sh`
+says when the two disagree). The fork's extraction, translation and build output
+(`Assets/`, `generated/`, `build-*/`) stays inside it, ignored by its own `.gitignore`. Minithena's
 separate page tooling (`Minithena/mariokartwebtest`: staging, a Cloudflare Worker, a room relay)
 disappeared from GitHub on or before 2026-10-28. It carried no licence apart from its room
 relay (`tools/cloudflare/rooms`, AGPL-3.0), which is here unchanged as `tools/relay/`; nothing
@@ -59,8 +66,8 @@ packages listed there. Everything installs under `~/tools` without sudo (Emscrip
 `bin/` with ninja, clang and nodtool) plus Rust with the `wasm32-unknown-unknown` target and Node 24.
 
 ```bash
-git clone https://github.com/mukulpatnaik/mkwii-webgpu.git && cd mkwii-webgpu
-git clone -b athena-web-ntsc https://github.com/mukulpatnaik/mkwii-webgpu-wiicompiled.git work/Wiicompiled
+git clone --recursive https://github.com/mukulpatnaik/mkwii-webgpu.git && cd mkwii-webgpu
+git -C work/Wiicompiled switch athena-web-ntsc   # only to work on the fork; a fresh clone sits detached at the pinned commit
 scripts/doctor.sh                       # what is missing, and where the private data stands
 ```
 

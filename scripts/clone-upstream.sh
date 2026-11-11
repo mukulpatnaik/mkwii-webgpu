@@ -15,8 +15,8 @@ clone wiicompiledweb https://github.com/OtherShindo957/WiicompiledWeb.git e1e4ba
 clone goldenballoon  https://github.com/akratch/goldenballoon.git        106bad37244a2f8829bab21c655d25ff4b4dcdbf
 # Minithena/mariokartwebtest (page tooling, room relay; studied in docs/research-browser-port.md)
 # vanished from GitHub by 2026-10-28 and carried no licence, so it is not cloned or vendored here.
-# The working fork lives in work/Wiicompiled (own git repo) and tracks Minithena/Wiicompiled `web`:
-#   git clone https://github.com/patchzyy/Wiicompiled.git work/Wiicompiled
+# The working fork is this repository's submodule at work/Wiicompiled (git submodule update --init).
+# It started from Minithena/Wiicompiled `web`; to compare with the originals, add them as remotes:
+#   git -C work/Wiicompiled remote add patchzyy https://github.com/patchzyy/Wiicompiled.git
 #   git -C work/Wiicompiled remote add minithena https://github.com/Minithena/Wiicompiled.git
-#   git -C work/Wiicompiled fetch minithena web && git -C work/Wiicompiled checkout -b athena-web minithena/web
 clone nod            https://github.com/encounter/nod.git                ebd80cac99b48a323200d84365e07a58cc27412d

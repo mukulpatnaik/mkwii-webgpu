@@ -1,0 +1,5 @@
+[submodule "work/Wiicompiled"]
+	path = work/Wiicompiled
+	url = https://github.com/mukulpatnaik/mkwii-webgpu-wiicompiled.git
+	branch = athena-web-ntsc
+	update = merge

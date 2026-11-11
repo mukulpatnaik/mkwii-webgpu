@@ -90,12 +90,20 @@ if [ -n "${DISPLAY:-}" ]; then ok "DISPLAY=$DISPLAY"; else warn "DISPLAY is not 
 
 section "Checkouts"
 fork="$ROOT/work/Wiicompiled"
-if [ -d "$fork/.git" ]; then
+# The fork is a submodule: .git is a directory in a checkout that predates that, a file in a fresh
+# clone. This repository pins one fork commit (the gitlink in the index).
+if [ -e "$fork/.git" ]; then
   branch="$(git -C "$fork" branch --show-current 2>/dev/null)"
-  if [ "$branch" = athena-web-ntsc ]; then ok "work/Wiicompiled on athena-web-ntsc"; else warn "work/Wiicompiled is on '$branch', not athena-web-ntsc"; fi
+  head="$(git -C "$fork" rev-parse HEAD 2>/dev/null)"
+  pinned="$(git -C "$ROOT" ls-files -s work/Wiicompiled | awk '{print $2}')"
+  if [ "$branch" = athena-web-ntsc ]; then ok "work/Wiicompiled on athena-web-ntsc"
+  elif [ -z "$branch" ] && [ "$head" = "$pinned" ]; then ok "work/Wiicompiled detached at the pinned commit (git -C work/Wiicompiled switch athena-web-ntsc to work on it)"
+  else warn "work/Wiicompiled is on '${branch:-a detached commit}', not athena-web-ntsc"; fi
+  if [ "$head" = "$pinned" ]; then ok "work/Wiicompiled at the commit this repository pins (${pinned:0:7})"
+  else warn "work/Wiicompiled is at ${head:0:7}, this repository pins ${pinned:0:7}: git submodule update to follow the pin, or git add work/Wiicompiled to move it"; fi
   [ -f "$fork/runtime/src/platform/web/mkw_fibers.js" ] || warn "work/Wiicompiled is not a web branch (no runtime/src/platform/web/mkw_fibers.js)"
 else
-  fail "work/Wiicompiled missing: git clone -b athena-web-ntsc https://github.com/mukulpatnaik/mkwii-webgpu-wiicompiled.git work/Wiicompiled"
+  fail "work/Wiicompiled missing: git submodule update --init"
 fi
 if [ -d "$ROOT/upstream/nod" ]; then ok "upstream/nod present (spikes/disc-wasm)"; else note "upstream/ not cloned (scripts/clone-upstream.sh; only needed for the spikes and research)"; fi
 if [ -d "$ROOT/tools/browser-test/node_modules/playwright-core" ]; then ok "tools/browser-test dependencies installed"; else note "tools/browser-test: run npm install there before browser tests"; fi
