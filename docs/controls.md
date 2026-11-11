@@ -131,18 +131,38 @@ dead zones and Dolphin-style expressions are in the same menu. These are saved p
 storage. Pads the browser cannot map (`mapping == ""`) should be offered "Set up" (the mapping
 wizard) in F10 → Controller settings; not tested in the browser.
 
-The page itself shows nothing about a connected pad: its Controls card lists the keyboard keys
-for port 1 and the line "A game controller works too". The pad is in F10 → Controller settings:
-with the keyboard on for a port the keyboard's bindings show there, and unticking "Keyboard and
-mouse" shows the assigned pad, the GameCube / Classic Controller Pro / PlayStation presets and
-its button table (in Xbox and PlayStation names).
+The page's Controls card is laid out like an emulator's input settings (Ryujinx's, in shape).
+In the middle is a drawing of a controller in the usual modern form: two sticks, a D-pad, four
+buttons in a diamond, plus and minus, bumpers and triggers, with no letters on it. The game's
+inputs sit in groups on either side (the game reads a GameCube controller whatever is plugged
+in, so the rows are A, B, X, Y, Z, L, R, Start, the control stick, the C-stick and the D-pad),
+one row each, with the binding at the end of the row. The row under the pointer lights where
+that input is on the pad on port 1, or on a Switch pad when there is none, and the part being
+rebound pulses. Tabs above choose whose bindings the rows show: the keyboard's keys, or, once a
+pad is on port 1, that pad's buttons in its own names (A/B/X/Y and ZL/ZR on a Switch pad; LB/RT
+on an Xbox pad; the symbols on a PlayStation pad). The pad's tab carries its name and takes
+over when the pad first appears. Clicking a cell and pressing a key, or a button on the pad,
+rebinds it; the sticks of a pad are fixed (left stick: control stick, right stick: C-stick).
+The rest (presets, a second binding, thresholds, other ports) stays in F10 → Controller
+settings, where unticking "Keyboard and mouse" for a port shows its pad.
 
-A simulated Switch Pro Controller (`Pro Controller (STANDARD GAMEPAD Vendor: 057e Product: 2009)`,
-standard mapping, replacing `navigator.getGamepads()` in Chrome on macOS, 2026-11-10) was
-assigned to port 1 and drove the menus: the bottom button is the game's A and the right button
-its B, so the printed A and B are swapped. F10 also listed it under "Unrecognized controllers"
-with **Fix mapping** and a generic name, which looks like a false alarm for a standard-layout
-pad. Not checked with a real Switch Pro Controller.
+In the browser a Switch Pro Controller or a pair of Joy-Cons defaults to Nintendo's printed
+layout: A on the right accelerates, B at the bottom brakes, X is at the top and Y on the left.
+Other pads keep A at the bottom. A pad that already has a saved mapping keeps it; the GameCube
+preset in F10 restores the default.
+
+Every pad the browser reports in its standard layout is recognised. Until 2026-11-10 F10
+listed all of them under "Unrecognized controllers" with **Fix mapping**, because SDL gives
+every browser pad the same generic mapping; that list now holds only pads without the standard
+layout (below). The page also hides its corner button while the F10 bar is open, since the
+bar's close mark is in the same corner.
+
+Checked with a simulated Switch Pro Controller (`Pro Controller (STANDARD GAMEPAD Vendor: 057e
+Product: 2009)`, standard mapping, replacing `navigator.getGamepads()` in Chrome on macOS,
+2026-11-10): named on the card and in F10, not listed as unrecognized, the right button
+confirms and the bottom one goes back, and a rebind from the card took the pad's top button.
+The game reads the pad only while the picture has the keyboard focus (click it once). Not
+checked with a real Switch Pro Controller or Joy-Cons.
 
 ### Controllers the browser does not know (no standard layout)
 
