@@ -131,6 +131,19 @@ dead zones and Dolphin-style expressions are in the same menu. These are saved p
 storage. Pads the browser cannot map (`mapping == ""`) should be offered "Set up" (the mapping
 wizard) in F10 → Controller settings; not tested in the browser.
 
+The page itself shows nothing about a connected pad: its Controls card lists the keyboard keys
+for port 1 and the line "A game controller works too". The pad is in F10 → Controller settings:
+with the keyboard on for a port the keyboard's bindings show there, and unticking "Keyboard and
+mouse" shows the assigned pad, the GameCube / Classic Controller Pro / PlayStation presets and
+its button table (in Xbox and PlayStation names).
+
+A simulated Switch Pro Controller (`Pro Controller (STANDARD GAMEPAD Vendor: 057e Product: 2009)`,
+standard mapping, replacing `navigator.getGamepads()` in Chrome on macOS, 2026-11-10) was
+assigned to port 1 and drove the menus: the bottom button is the game's A and the right button
+its B, so the printed A and B are swapped. F10 also listed it under "Unrecognized controllers"
+with **Fix mapping** and a generic name, which looks like a false alarm for a standard-layout
+pad. Not checked with a real Switch Pro Controller.
+
 ### Controllers the browser does not know (no standard layout)
 
 Chrome gives only controllers it recognises the `standard` layout; others (many third-party
@@ -183,7 +196,7 @@ combined axis; the wizard cannot bind that, so skip the D-pad steps there), Fire
    Emscripten joystick driver; SDL reports rumble only when the browser gives the pad an actuator.
    Browser support varies. Untested (see checklist).
 5. **The page must be focused.** Browsers stop reporting pad input to background tabs, and
-   keyboard input needs the game canvas focused (click the game once; that click is also A).
+   keyboard input needs the game canvas focused (click the game once; under the WASD + mouse preset that click is also A).
 
 ## How this was tested
 
