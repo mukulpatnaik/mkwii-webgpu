@@ -1,5 +1,5 @@
 import React from 'react';
-import {AbsoluteFill, interpolate, useCurrentFrame, useVideoConfig} from 'remotion';
+import {AbsoluteFill, interpolate, spring, useCurrentFrame, useVideoConfig} from 'remotion';
 import {bluePill, theme, yellowButton} from './theme';
 import {FADE_FRAMES} from './timeline';
 
@@ -97,22 +97,75 @@ export const TitleCard: React.FC<{durationInFrames: number}> = ({durationInFrame
   );
 };
 
+// The site's address as the page's big blue pill: it pops in, a sheen crosses it once, and the
+// Wii Menu's light-blue hover ring breathes around it.
+const SiteLink: React.FC<{at: number}> = ({at}) => {
+  const frame = useCurrentFrame();
+  const {fps} = useVideoConfig();
+  const t = frame - at;
+  const pop = spring({frame: t, fps, config: {damping: 11, stiffness: 150, mass: 0.7}});
+  const opacity = interpolate(t, [0, 8], [0, 1], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'});
+  const ring = 0.5 + 0.5 * Math.sin((Math.max(0, t) / fps) * Math.PI * 2 * 0.9);
+  const sheen = interpolate(t, [fps * 0.45, fps * 1.15], [-30, 130], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'});
+  return (
+    <div
+      style={{
+        ...bluePill,
+        position: 'relative',
+        overflow: 'hidden',
+        opacity,
+        transform: `scale(${0.8 + 0.2 * pop})`,
+        border: '4px solid #1b63a8',
+        padding: '34px 96px 38px',
+        fontSize: 128,
+        fontWeight: 900,
+        lineHeight: 1,
+        letterSpacing: '-0.01em',
+        whiteSpace: 'nowrap',
+        textShadow: '0 3px 2px rgba(0, 0, 0, 0.28)',
+        boxShadow: [
+          'inset 0 4px 0 rgba(255, 255, 255, 0.45)',
+          `0 0 0 ${8 + 5 * ring}px rgba(52, 190, 237, ${0.3 + 0.3 * ring})`,
+          `0 0 ${36 + 24 * ring}px rgba(52, 190, 237, ${0.35 + 0.3 * ring})`,
+          '0 10px 22px rgba(0, 0, 0, 0.22)',
+        ].join(', '),
+      }}
+    >
+      mkwii.online
+      <div
+        style={{
+          position: 'absolute',
+          top: 0,
+          bottom: 0,
+          left: `${sheen}%`,
+          width: '22%',
+          transform: 'skewX(-20deg)',
+          background: 'linear-gradient(90deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0))',
+        }}
+      />
+    </div>
+  );
+};
+
 export const ClosingCard: React.FC<{durationInFrames: number}> = ({durationInFrames}) => {
   const {fps} = useVideoConfig();
   const beat = Math.round(fps * 0.3);
   return (
     <Fade durationInFrames={durationInFrames} background={theme.ground}>
       <AbsoluteFill style={ground}>
-        <Tile>
-          {/* The top line is left open for a link; this keeps its height so the rest stays put. */}
-          <div style={{height: 84}} />
-          <Reveal at={FADE_FRAMES + beat}>
-            <Pill kind="yellow">Build it from your own disc.</Pill>
-          </Reveal>
-          <Reveal at={FADE_FRAMES + 2 * beat}>
-            <div style={{fontSize: 34, fontWeight: 700, color: theme.muted}}>github.com/mukulpatnaik/mkwii-webgpu</div>
-          </Reveal>
-        </Tile>
+        {/* The address sits at the centre of the frame; the source line hangs under the tile. */}
+        <div style={{position: 'relative'}}>
+          <Tile width={1320}>
+            <div style={{padding: '34px 0'}}>
+              <SiteLink at={FADE_FRAMES} />
+            </div>
+          </Tile>
+          <div style={{position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 44, textAlign: 'center'}}>
+            <Reveal at={FADE_FRAMES + 2 * beat}>
+              <div style={{fontSize: 34, fontWeight: 700, color: theme.muted}}>github.com/mukulpatnaik/mkwii-webgpu</div>
+            </Reveal>
+          </div>
+        </div>
       </AbsoluteFill>
     </Fade>
   );
